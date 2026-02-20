@@ -154,7 +154,10 @@ npm run start
 - `npm run build` - production build
 - `npm run start` - run built app
 - `npm run lint` - lint
+- `npm run typecheck` - TypeScript type check without emit
 - `npm run prisma:generate` - regenerate Prisma client
+- `npm run prisma:validate` - validate Prisma schema
+- `npm run prisma:migrate:status` - show migration status for current DB
 - `npm run prisma:migrate` - Prisma migrate dev
 - `npm run prisma:studio` - Prisma Studio
 - `npm run db:seed` - seed DB
@@ -174,7 +177,8 @@ npm run start
 ## CI and Testing
 - GitHub Actions workflow: `.github/workflows/ci.yml`
 - CI runs on push/PR for `master` and `main`
-- Pipeline steps: `npm ci` -> `prisma:generate` -> `lint` -> `test:unit` -> `build`
+- Main pipeline steps: `npm ci` -> `prisma:generate` -> `prisma:validate` -> `migrate deploy` -> `prisma:migrate:status` -> `lint` -> `typecheck` -> `test:unit` -> `build`
+- Separate `e2e-smoke` job runs Playwright smoke tests (including admin login flow) after main pipeline passes
 
 ## Automation (Housekeeping + Digest)
 
