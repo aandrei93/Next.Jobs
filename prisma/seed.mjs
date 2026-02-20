@@ -165,7 +165,8 @@ async function main() {
 
   console.log("Seed completed.");
   console.log("Published jobs ensured: 50");
-  console.log(`Admin login: ${adminEmail} / ${adminPassword}`);
+  console.log(`Admin login email: ${adminEmail}`);
+  console.log("Admin password is sourced from ADMIN_PASSWORD (or local seed default).");
 }
 
 main()
