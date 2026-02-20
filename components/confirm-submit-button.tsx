@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
@@ -45,7 +45,6 @@ export function ConfirmSubmitButton({
 }: ConfirmSubmitButtonProps) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [confirmTextValue, setConfirmTextValue] = useState("DELETE");
   const [adminPasswordValue, setAdminPasswordValue] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -54,10 +53,6 @@ export function ConfirmSubmitButton({
     () => confirmTextValue.trim().toUpperCase() === "DELETE" && adminPasswordValue.trim().length >= 4,
     [confirmTextValue, adminPasswordValue]
   );
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   function closeDialog() {
     setOpen(false);
@@ -113,7 +108,7 @@ export function ConfirmSubmitButton({
         {children}
       </button>
 
-      {open && mounted
+      {open && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[120] flex items-start justify-center bg-slate-950/55 p-4 pt-[10vh] backdrop-blur-[2px]">
               <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_40px_120px_-50px_rgba(2,6,23,0.8)]">
