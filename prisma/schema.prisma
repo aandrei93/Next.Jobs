@@ -1,0 +1,585 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CANDIDATE
+  EMPLOYER
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  CLOSED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  NEW
+  SCREENING
+  INTERVIEW
+  OFFER
+  REVIEWED
+  REJECTED
+  HIRED
+}
+
+enum RateLimitAction {
+  LOGIN
+  REGISTER
+  APPLY
+}
+
+enum MaintenanceScope {
+  PUBLIC_ONLY
+  ALL_NON_ADMIN
+}
+
+enum CompanyVerificationStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+}
+
+enum CategorySuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AdminAuditAction {
+  COMPANY_SUSPENDED
+  COMPANY_UNSUSPENDED
+  COMPANY_VERIFIED
+  COMPANY_UNVERIFIED
+  JOB_APPROVED
+  JOB_REJECTED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  passwordHash  String
+  emailVerified Boolean       @default(true)
+  sessionVersion Int          @default(0)
+  title         String?
+  bio           String?
+  city          String?
+  citizenship   String?
+  birthDate     DateTime?
+  gender        String?
+  website       String?
+  linkedin      String?
+  github        String?
+  role          UserRole      @default(CANDIDATE)
+  accountType   String        @default("candidate")
+  privacyAcceptedAt DateTime?
+  preferredLocale String?
+  notifyNewApplicationEmail Boolean @default(true)
+  notifyDigestEmail Boolean  @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  jobsCreated   Job[]
+  savedJobs     SavedJob[]
+  applications  Application[]
+  jobViews      JobUniqueView[]
+  adminAuditLogs AdminAuditLog[]
+  sentApplicationMessages ApplicationMessage[] @relation("ApplicationMessageSender")
+  applicationNotes ApplicationNote[] @relation("ApplicationNoteAuthor")
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  resume        Resume?
+  companiesOwned Company[]      @relation("CompanyOwner")
+  categorySuggestions CategorySuggestion[]
+  adminOtpChallenges AdminLoginOtp[]
+  mediaAssets   MediaAsset[]
+  errorLogs     ErrorLog[]
+  adminTasks    AdminTask[]         @relation("AdminTaskCreatedBy")
+  adminChanges  AdminChangeLog[]    @relation("AdminChangeActor")
+  settingsVersions SiteSettingsVersion[] @relation("SettingsVersionActor")
+  deletedJobs   DeletedJob[]        @relation("DeletedJobActor")
+  deletedCompanies DeletedCompany[] @relation("DeletedCompanyActor")
+  deletedCategories DeletedCategory[] @relation("DeletedCategoryActor")
+  restoredJobs  DeletedJob[]        @relation("RestoredJobActor")
+  restoredCompanies DeletedCompany[] @relation("RestoredCompanyActor")
+  restoredCategories DeletedCategory[] @relation("RestoredCategoryActor")
+}
+
+model Resume {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  headline      String?
+  summary       String?
+  skills        String?
+  languages     String?
+  experience    String?
+  experienceYears String?
+  education     String?
+  links         String?
+  desiredRole   String?
+  preferredCity String?
+  phone         String?
+  availability  String?
+  workPreference String?
+  workAuthorization String?
+  drivingLicense String?
+  hobbies       String?
+  expectedSalary String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  registrationNumber String? @unique
+  vatNumber   String?
+  industry    String?
+  companySize String?
+  foundedYear Int?
+  isSuspended Boolean  @default(false)
+  verificationStatus CompanyVerificationStatus @default(PENDING_VERIFICATION)
+  verifiedAt   DateTime?
+  location    String
+  website     String?
+  description String?
+  ownerId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobs        Job[]
+  categorySuggestions CategorySuggestion[]
+  owner       User?    @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+}
+
+model SiteSettings {
+  id                          String   @id @default("default")
+  siteName                    String   @default("nextjobs")
+  defaultLocale               String   @default("ro")
+  siteTagline                 String?  @default("Find your next opportunity faster.")
+  supportEmail                String?
+  contactEmail                String?
+  contactPhone                String?
+  defaultCurrency             String   @default("EUR")
+  defaultJobExpirationDays    Int      @default(30)
+  jobsPerPage                 Int      @default(20)
+  adminDashboardDefaultRange  String   @default("7d")
+  homeFeaturedJobsCount       Int      @default(8)
+  jobsDefaultPostedFilter     String   @default("any")
+  maintenanceScope            MaintenanceScope @default(PUBLIC_ONLY)
+  loginRateLimitPerHour       Int      @default(20)
+  registerRateLimitPerHour    Int      @default(10)
+  applyRateLimitPerHour       Int      @default(25)
+  requireCvOnApply            Boolean  @default(false)
+  minApplicationMessageLength Int      @default(0)
+  preventDuplicateApplications Boolean @default(true)
+  blockedKeywords             String?
+  minJobDescriptionLength     Int      @default(20)
+  allowCandidatePosting       Boolean  @default(true)
+  allowPublicRegistration     Boolean  @default(true)
+  requireCompanyBeforePosting Boolean  @default(true)
+  autoApproveCandidateJobs    Boolean  @default(false)
+  maintenanceMode             Boolean  @default(false)
+  maintenanceMessage          String?
+  seoNoIndex                  Boolean  @default(false)
+  seoCanonicalUrl             String?
+  seoDefaultOgImage           String?
+  siteFaviconUrl              String?
+  enableSitemap               Boolean  @default(true)
+  gaMeasurementId             String?
+  smtpHost                    String?
+  smtpPort                    Int?
+  smtpUser                    String?
+  smtpPassword                String?
+  smtpFrom                    String?
+  smtpSecure                  Boolean  @default(false)
+  adminSessionMaxHours        Int      @default(12)
+  maxFailedLogins             Int      @default(10)
+  adminTwoFactorRequired      Boolean  @default(false)
+  maxUploadMb                 Int      @default(10)
+  allowedMimeTypes            String?
+  defaultTimezone             String   @default("Europe/Bucharest")
+  dateFormat                  String   @default("dd.MM.yyyy")
+  allowedCountries            String?
+  webhookUrl                  String?
+  webhookSecret               String?
+  featureSavedJobs            Boolean  @default(true)
+  featureResumeBuilder        Boolean  @default(true)
+  featurePublicProfiles       Boolean  @default(false)
+  autoCloseExpiredJobs        Boolean  @default(true)
+  applicationRetentionDays    Int      @default(365)
+  draftRetentionDays          Int      @default(90)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+model MediaAsset {
+  id           String   @id @default(cuid())
+  url          String   @unique
+  label        String?
+  mimeType     String?
+  sizeBytes    Int?
+  kind         String   @default("image")
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([kind, createdAt])
+  @@index([uploadedById])
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  key       String
+  locale    String   @default("en")
+  subject   String
+  textBody  String
+  htmlBody  String?
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+  @@index([locale])
+}
+
+model LocaleTranslation {
+  id        String   @id @default(cuid())
+  locale    String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, key])
+  @@index([locale])
+}
+
+model RateLimitEvent {
+  id        String          @id @default(cuid())
+  action    RateLimitAction
+  ip        String
+  createdAt DateTime        @default(now())
+
+  @@index([action, ip, createdAt])
+}
+
+model AdminLoginOtp {
+  id         String   @id @default(cuid())
+  userId     String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model AdminAuditLog {
+  id        String           @id @default(cuid())
+  adminId   String
+  action    AdminAuditAction
+  targetType String
+  targetId  String
+  summary   String?
+  createdAt DateTime         @default(now())
+  admin     User             @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId, createdAt])
+}
+
+model ErrorLog {
+  id         String   @id @default(cuid())
+  source     String   @default("client")
+  name       String?
+  message    String
+  stack      String?
+  digest     String?
+  path       String?
+  userAgent  String?
+  metadata   String?
+  userId     String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([source, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobs      Job[]
+}
+
+model CategorySuggestion {
+  id             String                   @id @default(cuid())
+  name           String
+  normalizedName String
+  details        String?
+  status         CategorySuggestionStatus @default(PENDING)
+  adminNote      String?
+  reviewedAt     DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  suggestedById  String
+  companyId      String?
+  suggestedBy    User                     @relation(fields: [suggestedById], references: [id], onDelete: Cascade)
+  company        Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([suggestedById, createdAt])
+  @@index([companyId, createdAt])
+  @@index([normalizedName])
+}
+
+model Job {
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  summary        String
+  description    String
+  location       String
+  isRemote       Boolean        @default(false)
+  employmentType EmploymentType
+  salaryMin      Int?
+  salaryMax      Int?
+  viewsCount     Int            @default(0)
+  currency       String         @default("EUR")
+  expirationDate DateTime?
+  referenceNumber String?
+  status         JobStatus      @default(DRAFT)
+  moderationNote String?
+  publishedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  companyId      String
+  categoryId     String?
+  createdById    String
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category       Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy      User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  applications   Application[]
+  savedBy        SavedJob[]
+  uniqueViews    JobUniqueView[]
+
+  @@index([status, createdAt])
+  @@index([companyId])
+  @@index([categoryId])
+}
+
+model JobUniqueView {
+  id           String   @id @default(cuid())
+  jobId        String
+  userId       String?
+  visitorToken String?
+  createdAt    DateTime @default(now())
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([jobId, userId])
+  @@unique([jobId, visitorToken])
+  @@index([userId, createdAt])
+  @@index([jobId, createdAt])
+}
+
+model Application {
+  id         String            @id @default(cuid())
+  fullName   String
+  email      String
+  cvUrl      String?
+  cvSource   String?
+  resumeSnapshot String?
+  message    String?
+  status     ApplicationStatus @default(NEW)
+  lastMessageAt DateTime?
+  lastReadByCandidateAt DateTime?
+  lastReadByOwnerAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  jobId      String
+  userId     String?
+  job        Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user       User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages   ApplicationMessage[]
+  notes      ApplicationNote[]
+
+  @@index([jobId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model ApplicationMessage {
+  id            String      @id @default(cuid())
+  applicationId String
+  senderId      String
+  content       String
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sender        User        @relation("ApplicationMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+}
+
+model ApplicationNote {
+  id            String      @id @default(cuid())
+  applicationId String
+  authorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author        User        @relation("ApplicationNoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model AdminTask {
+  id          String   @id @default(cuid())
+  type        String
+  status      String   @default("PENDING")
+  inputJson   String?
+  outputJson  String?
+  errorText   String?
+  createdAt   DateTime @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdById String
+  createdBy   User     @relation("AdminTaskCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model AdminChangeLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String?
+  action     String
+  beforeJson String?
+  afterJson  String?
+  createdAt  DateTime @default(now())
+  adminId    String
+  admin      User     @relation("AdminChangeActor", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, createdAt])
+  @@index([adminId, createdAt])
+}
+
+model SiteSettingsVersion {
+  id             String   @id @default(cuid())
+  settingsJson   String
+  reason         String?
+  createdAt      DateTime @default(now())
+  createdById    String?
+  restoredFromId String?
+  createdBy      User?    @relation("SettingsVersionActor", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([createdById, createdAt])
+}
+
+model DeletedJob {
+  id           String   @id @default(cuid())
+  originalId   String
+  payloadJson  String
+  deletedAt    DateTime @default(now())
+  deletedById  String?
+  restoredAt   DateTime?
+  restoredById String?
+  deletedBy    User?    @relation("DeletedJobActor", fields: [deletedById], references: [id], onDelete: SetNull)
+  restoredBy   User?    @relation("RestoredJobActor", fields: [restoredById], references: [id], onDelete: SetNull)
+
+  @@unique([originalId])
+  @@index([deletedAt])
+}
+
+model DeletedCompany {
+  id           String   @id @default(cuid())
+  originalId   String
+  payloadJson  String
+  deletedAt    DateTime @default(now())
+  deletedById  String?
+  restoredAt   DateTime?
+  restoredById String?
+  deletedBy    User?    @relation("DeletedCompanyActor", fields: [deletedById], references: [id], onDelete: SetNull)
+  restoredBy   User?    @relation("RestoredCompanyActor", fields: [restoredById], references: [id], onDelete: SetNull)
+
+  @@unique([originalId])
+  @@index([deletedAt])
+}
+
+model DeletedCategory {
+  id           String   @id @default(cuid())
+  originalId   String
+  payloadJson  String
+  deletedAt    DateTime @default(now())
+  deletedById  String?
+  restoredAt   DateTime?
+  restoredById String?
+  deletedBy    User?    @relation("DeletedCategoryActor", fields: [deletedById], references: [id], onDelete: SetNull)
+  restoredBy   User?    @relation("RestoredCategoryActor", fields: [restoredById], references: [id], onDelete: SetNull)
+
+  @@unique([originalId])
+  @@index([deletedAt])
+}

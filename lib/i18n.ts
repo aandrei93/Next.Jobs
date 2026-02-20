@@ -1,0 +1,572 @@
+﻿import { cookies } from "next/headers";
+import { prisma } from "@/lib/db";
+
+export const locales = ["ro", "en"] as const;
+export type Locale = (typeof locales)[number];
+
+export const defaultLocale: Locale = "ro";
+
+function isLocale(value: string): value is Locale {
+  return locales.includes(value as Locale);
+}
+
+export async function getLocale(): Promise<Locale> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get("locale")?.value;
+
+  if (value && isLocale(value)) {
+    return value;
+  }
+
+  return getConfiguredDefaultLocale();
+}
+
+export function resolveLocale(value?: string | null): Locale {
+  if (value && isLocale(value)) {
+    return value;
+  }
+
+  return defaultLocale;
+}
+
+const dictionaries = {
+  en: {
+    localeName: "English",
+    localeSwitchLabel: "Language",
+    nav: {
+      findJobs: "Find Jobs",
+      savedJobs: "Saved Jobs",
+      workspace: "My Space",
+      adminPanel: "Admin Panel",
+      candidateBadge: "Candidate",
+      employerBadge: "Employer",
+      login: "Login",
+      join: "Join",
+      logout: "Logout",
+    },
+    common: {
+      remote: "Remote",
+      save: "Save",
+      saved: "Saved",
+      viewJob: "View job",
+      salaryNotDisclosed: "Salary not disclosed",
+      noJobs: "No jobs match the current filters.",
+      reset: "Reset",
+      revealEmail: "Show email",
+    },
+    toast: {
+      saved: "Job saved successfully.",
+      unsaved: "Job removed from saved list.",
+      applied: "Application submitted successfully.",
+      applyError: "Could not submit the application.",
+      adminSuccess: "Action completed successfully.",
+      adminError: "Could not complete the action.",
+      resumeSaved: "Resume updated successfully.",
+      successTitle: "Success",
+      errorTitle: "Action failed",
+      closeLabel: "Close notification",
+    },
+    home: {
+      badge: "Modern hiring board",
+      title: "Build and run your complete jobs platform.",
+      subtitle:
+        "Public listing pages, candidate flow, and full admin control for jobs, companies, categories, users, and applications.",
+      browseJobs: "Browse jobs",
+      openAdmin: "Open admin",
+      searchTitle: "Search jobs",
+      searchPlaceholder: "Job title, company",
+      locationPlaceholder: "City or country",
+      searchAction: "Find now",
+      trustedBy: "Trusted by growing teams",
+      activeJobs: "Active jobs",
+      companies: "Companies",
+      candidates: "Candidates",
+      featured: "Featured",
+      exploreBy: "Explore by category",
+      latestJobs: "Latest jobs",
+      viewAll: "View all",
+      details: "See details",
+      noPublished: "No published jobs yet.",
+    },
+    login: {
+      title: "Login",
+      subtitle: "Sign in to manage your platform.",
+      noAccount: "No account?",
+      createCandidate: "Create candidate account",
+      invalidCredentials: "Invalid email or password.",
+      signingIn: "Signing in...",
+      passwordPlaceholder: "Password",
+    },
+    register: {
+      title: "Create candidate account",
+      subtitle: "Admin accounts can only be created from admin panel.",
+      namePlaceholder: "Full name",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Password",
+      register: "Register",
+      hasAccount: "Already have an account?",
+      login: "Login",
+    },
+    admin: {
+      dashboard: "Admin Dashboard",
+      dashboardSubtitle: "Full control for all platform data.",
+      overview: "Overview",
+      jobs: "Jobs",
+      companies: "Companies",
+      categories: "Categories",
+      applications: "Applications",
+      users: "Users",
+      settings: "Settings",
+      create: "Create",
+      save: "Save",
+      edit: "Edit",
+      view: "View",
+      delete: "Delete",
+      existingJobs: "Existing jobs",
+      existingCompanies: "Existing companies",
+      existingCategories: "Existing categories",
+      existingUsers: "Existing users",
+      createJob: "Create job",
+      editJob: "Edit job",
+      createCompany: "Create company",
+      createCategory: "Create category",
+      createUser: "Create user",
+      pendingReviewJobs: "Pending review jobs",
+      noPendingReviewJobs: "No jobs waiting for review.",
+      approve: "Approve",
+      rejectToDraft: "Reject to draft",
+      moderationNotePlaceholder: "Optional moderation note for employer",
+      analyticsTitle: "Performance analytics",
+      range7: "7d",
+      range30: "30d",
+      range90: "90d",
+      publishedPerDay: "Published jobs per day",
+      applicationsPerDay: "Applications per day",
+      funnelTitle: "Funnel snapshot",
+      stageDraft: "Draft jobs",
+      stageReview: "In review",
+      stagePublished: "Published jobs",
+      stageApplications: "Applications",
+      topCompaniesByApplications: "Top companies by applications",
+      topJobsByApplications: "Top jobs by applications",
+      noDataRange: "No data in selected range.",
+      noJobs: "No jobs yet.",
+      noCompanies: "No companies yet.",
+      noCategories: "No categories yet.",
+      noApplications: "No applications yet.",
+      noUsers: "No users yet.",
+      noCategory: "No category",
+      remote: "Remote",
+      saveChanges: "Save changes",
+    },
+    me: {
+      dashboard: "My Workspace",
+      subtitle: "Manage your profile, resume, jobs, and applications.",
+      profile: "My Profile",
+      profileStats: "Profile statistics",
+      editProfile: "Edit profile",
+      saveProfile: "Save profile",
+      profileTitle: "Professional title",
+      profileCity: "Current city",
+      profileWebsite: "Website",
+      profileLinkedin: "LinkedIn URL",
+      profileGithub: "GitHub URL",
+      profileBio: "About me",
+      resumePreview: "Resume preview",
+      latestApplications: "Latest applications",
+      noResumeYet: "You don't have a resume yet.",
+      statsPostedJobs: "Posted jobs",
+      statsSavedJobs: "Saved jobs",
+      statsApplications: "Applications",
+      statsResume: "Resume profile",
+      resume: "My Resume",
+      companies: "My Companies",
+      myJobs: "My Jobs",
+      myApplications: "My Applications",
+      updateResume: "Update resume",
+      resumeSaved: "Resume updated successfully.",
+      postJob: "Post a job",
+      myPostedJobs: "Jobs posted by me",
+      noPostedJobs: "You have not posted jobs yet.",
+      noApplications: "You do not have tracked applications yet.",
+      quickApply: "Quick apply profile",
+      headline: "Professional headline",
+      summary: "Summary",
+      skills: "Skills (comma separated)",
+      experience: "Experience",
+      education: "Education",
+      links: "Links (portfolio, LinkedIn, etc.)",
+      desiredRole: "Desired role",
+      preferredCity: "Preferred city",
+      draft: "Draft",
+      pendingReview: "Pending review",
+      published: "Published",
+      closed: "Closed",
+      submitForReview: "Submit for review",
+      moderationNote: "Moderator note",
+      submittedOn: "Submitted",
+      suggestCategoryTitle: "Can't find the right category?",
+      suggestCategoryDescription:
+        "Suggest a new category from here. Admin can approve it and it will become available in the dropdown.",
+      suggestCategoryPlaceholder: "e.g. Cybersecurity",
+      suggestCategorySubmit: "Submit suggestion",
+      suggestCategoryNoRecent: "No recent suggestions.",
+    },
+    jobs: {
+      quickFilters: "Quick filters:",
+      fullTime: "Full-time",
+      contract: "Contract",
+      clearAll: "Clear all",
+      filters: "All filters",
+      employmentType: "Employment type",
+      topCompanies: "Top companies",
+      topCities: "Top cities",
+      anyCompany: "Any company",
+      anyCity: "Any city",
+      workMode: "Work mode",
+      remoteOnly: "Remote only",
+      keywords: "Keywords",
+      location: "Location",
+      sort: "Sort",
+      searchPlaceholder: "Job title, company",
+      locationPlaceholder: "Country or city",
+      filterButton: "Filters",
+      done: "Done",
+      liveFiltering: "Live filtering enabled",
+      showingRange: "Showing",
+      of: "of",
+      jobs: "jobs",
+      similar: "Similar",
+      page: "Page",
+      prev: "Prev",
+      next: "Next",
+      savedJobs: "Saved jobs",
+      manageShortlist: "Manage your shortlist and revisit opportunities quickly.",
+      remove: "Remove",
+      noSaved: "You have no saved jobs yet.",
+      browseJobs: "Browse jobs",
+      saveThisJob: "Save this job",
+      applyNow: "Apply now",
+      fullName: "Full name",
+      cvLink: "CV link (optional)",
+      message: "Message (optional)",
+      submitApplication: "Submit application",
+      savedAt: "Saved",
+      keyPoints: "Key points",
+    },
+  },
+  ro: {
+    localeName: "Romana",
+    localeSwitchLabel: "Limba",
+    nav: {
+      findJobs: "Joburi",
+      savedJobs: "Joburi salvate",
+      workspace: "Spatiul meu",
+      adminPanel: "Admin",
+      candidateBadge: "Candidat",
+      employerBadge: "Angajator",
+      login: "Login",
+      join: "Cont nou",
+      logout: "Iesire",
+    },
+    common: {
+      remote: "Remote",
+      save: "Salveaza",
+      saved: "Salvat",
+      viewJob: "Vezi job",
+      salaryNotDisclosed: "Salariul nu este afisat",
+      noJobs: "Niciun job nu corespunde filtrelor.",
+      reset: "Reset",
+      revealEmail: "Afiseaza email",
+    },
+    toast: {
+      saved: "Job salvat cu succes.",
+      unsaved: "Job eliminat din lista de salvate.",
+      applied: "Aplicarea a fost trimisa cu succes.",
+      applyError: "Nu am putut trimite aplicarea.",
+      adminSuccess: "Actiunea a fost efectuata cu succes.",
+      adminError: "Nu am putut efectua actiunea.",
+      resumeSaved: "CV actualizat cu succes.",
+      successTitle: "Succes",
+      errorTitle: "Actiune esuata",
+      closeLabel: "Inchide notificarea",
+    },
+    home: {
+      badge: "Platforma moderna de recrutare",
+      title: "Construieste si administreaza complet platforma ta de joburi.",
+      subtitle:
+        "Pagini publice de listare, flux candidat si control complet in admin pentru joburi, companii, categorii, utilizatori si aplicatii.",
+      browseJobs: "Vezi joburi",
+      openAdmin: "Deschide admin",
+      searchTitle: "Cauta joburi",
+      searchPlaceholder: "Titlu job, companie",
+      locationPlaceholder: "Oras sau tara",
+      searchAction: "Cauta acum",
+      trustedBy: "Folosit de echipe in crestere",
+      activeJobs: "Joburi active",
+      companies: "Companii",
+      candidates: "Candidati",
+      featured: "Recomandat",
+      exploreBy: "Exploreaza pe categorii",
+      latestJobs: "Joburi recente",
+      viewAll: "Vezi toate",
+      details: "Vezi detalii",
+      noPublished: "Momentan nu exista joburi publicate.",
+    },
+    login: {
+      title: "Autentificare",
+      subtitle: "Intra in cont pentru a administra platforma.",
+      noAccount: "Nu ai cont?",
+      createCandidate: "Creeaza cont candidat",
+      invalidCredentials: "Email sau parola invalida.",
+      signingIn: "Se autentifica...",
+      passwordPlaceholder: "Parola",
+    },
+    register: {
+      title: "Creeaza cont candidat",
+      subtitle: "Conturile de admin se creeaza doar din panelul admin.",
+      namePlaceholder: "Nume complet",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Parola",
+      register: "Inregistrare",
+      hasAccount: "Ai deja cont?",
+      login: "Login",
+    },
+    admin: {
+      dashboard: "Dashboard Admin",
+      dashboardSubtitle: "Control complet pentru toate datele platformei.",
+      overview: "Sumar",
+      jobs: "Joburi",
+      companies: "Companii",
+      categories: "Categorii",
+      applications: "Aplicatii",
+      users: "Utilizatori",
+      settings: "Setari",
+      create: "Creeaza",
+      save: "Salveaza",
+      edit: "Editeaza",
+      view: "Vezi",
+      delete: "Sterge",
+      existingJobs: "Joburi existente",
+      existingCompanies: "Companii existente",
+      existingCategories: "Categorii existente",
+      existingUsers: "Utilizatori existenti",
+      createJob: "Creeaza job",
+      editJob: "Editeaza job",
+      createCompany: "Creeaza companie",
+      createCategory: "Creeaza categorie",
+      createUser: "Creeaza utilizator",
+      pendingReviewJobs: "Joburi in asteptare pentru review",
+      noPendingReviewJobs: "Nu exista joburi in asteptare.",
+      approve: "Aproba",
+      rejectToDraft: "Respinge in draft",
+      moderationNotePlaceholder: "Motiv optional pentru angajator",
+      analyticsTitle: "Analytics performanta",
+      range7: "7z",
+      range30: "30z",
+      range90: "90z",
+      publishedPerDay: "Joburi publicate pe zi",
+      applicationsPerDay: "Aplicari pe zi",
+      funnelTitle: "Snapshot funnel",
+      stageDraft: "Joburi draft",
+      stageReview: "In review",
+      stagePublished: "Joburi publicate",
+      stageApplications: "Aplicari",
+      topCompaniesByApplications: "Top companii dupa aplicari",
+      topJobsByApplications: "Top joburi dupa aplicari",
+      noDataRange: "Nu exista date in intervalul selectat.",
+      noJobs: "Nu exista joburi.",
+      noCompanies: "Nu exista companii.",
+      noCategories: "Nu exista categorii.",
+      noApplications: "Nu exista aplicatii.",
+      noUsers: "Nu exista utilizatori.",
+      noCategory: "Fara categorie",
+      remote: "Remote",
+      saveChanges: "Salveaza modificarile",
+    },
+    me: {
+      dashboard: "Workspace personal",
+      subtitle: "Gestioneaza profilul, CV-ul, joburile si aplicatiile tale.",
+      profile: "Profilul meu",
+      profileStats: "Statistici profil",
+      editProfile: "Editeaza profil",
+      saveProfile: "Salveaza profilul",
+      profileTitle: "Titlu profesional",
+      profileCity: "Oras curent",
+      profileWebsite: "Website",
+      profileLinkedin: "URL LinkedIn",
+      profileGithub: "URL GitHub",
+      profileBio: "Despre mine",
+      resumePreview: "Preview CV",
+      latestApplications: "Aplicari recente",
+      noResumeYet: "Nu ai CV completat inca.",
+      statsPostedJobs: "Joburi publicate",
+      statsSavedJobs: "Joburi salvate",
+      statsApplications: "Aplicari",
+      statsResume: "Profil CV",
+      resume: "CV-ul meu",
+      companies: "Companiile mele",
+      myJobs: "Joburile mele",
+      myApplications: "Aplicatiile mele",
+      updateResume: "Actualizeaza CV",
+      resumeSaved: "CV actualizat cu succes.",
+      postJob: "Publica un job",
+      myPostedJobs: "Joburi publicate de mine",
+      noPostedJobs: "Nu ai publicat joburi inca.",
+      noApplications: "Nu ai aplicatii urmarite inca.",
+      quickApply: "Profil pentru aplicare rapida",
+      headline: "Titlu profesional",
+      summary: "Sumar",
+      skills: "Skill-uri (separate prin virgula)",
+      experience: "Experienta",
+      education: "Educatie",
+      links: "Link-uri (portofoliu, LinkedIn etc.)",
+      desiredRole: "Rol dorit",
+      preferredCity: "Oras preferat",
+      draft: "Draft",
+      pendingReview: "In review",
+      published: "Publicat",
+      closed: "Inchis",
+      submitForReview: "Trimite la review",
+      moderationNote: "Nota moderator",
+      submittedOn: "Trimisa",
+      suggestCategoryTitle: "Nu gasesti categoria potrivita?",
+      suggestCategoryDescription:
+        "Propune o categorie noua direct de aici. Adminul o poate aproba si va deveni disponibila in dropdown.",
+      suggestCategoryPlaceholder: "Ex: Cybersecurity",
+      suggestCategorySubmit: "Trimite propunere",
+      suggestCategoryNoRecent: "Nu ai propuneri recente.",
+    },
+    jobs: {
+      quickFilters: "Filtre rapide:",
+      fullTime: "Full-time",
+      contract: "Contract",
+      clearAll: "Reset total",
+      filters: "Toate filtrele",
+      employmentType: "Tip angajare",
+      topCompanies: "Companii populare",
+      topCities: "Orase populare",
+      anyCompany: "Orice companie",
+      anyCity: "Orice oras",
+      workMode: "Mod de lucru",
+      remoteOnly: "Doar remote",
+      keywords: "Cuvinte cheie",
+      location: "Locatie",
+      sort: "Sortare",
+      searchPlaceholder: "Titlu job, companie",
+      locationPlaceholder: "Tara sau oras",
+      filterButton: "Filtre",
+      done: "Gata",
+      liveFiltering: "Filtrare live activa",
+      showingRange: "Se afiseaza",
+      of: "din",
+      jobs: "joburi",
+      similar: "Similare",
+      page: "Pagina",
+      prev: "Anterior",
+      next: "Urmator",
+      savedJobs: "Joburi salvate",
+      manageShortlist: "Gestioneaza shortlist-ul si revino rapid la oportunitati.",
+      remove: "Elimina",
+      noSaved: "Nu ai joburi salvate momentan.",
+      browseJobs: "Vezi joburi",
+      saveThisJob: "Salveaza jobul",
+      applyNow: "Aplica acum",
+      fullName: "Nume complet",
+      cvLink: "Link CV (optional)",
+      message: "Mesaj (optional)",
+      submitApplication: "Trimite aplicarea",
+      savedAt: "Salvat",
+      keyPoints: "Puncte cheie",
+    },
+  },
+} as const;
+
+const getConfiguredDefaultLocale = async (): Promise<Locale> => {
+  try {
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: "default" },
+      select: { defaultLocale: true },
+    });
+    return resolveLocale(settings?.defaultLocale);
+  } catch {
+    return defaultLocale;
+  }
+};
+
+function flattenRecord(record: unknown, prefix = "", out: Record<string, string> = {}) {
+  if (!record || typeof record !== "object") {
+    return out;
+  }
+
+  for (const [key, value] of Object.entries(record as Record<string, unknown>)) {
+    const nextKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "string") {
+      out[nextKey] = value;
+      continue;
+    }
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      flattenRecord(value, nextKey, out);
+    }
+  }
+
+  return out;
+}
+
+function assignIfPathExists(target: Record<string, unknown>, path: string, value: string) {
+  const parts = path.split(".");
+  let current: Record<string, unknown> | undefined = target;
+
+  for (let i = 0; i < parts.length - 1; i += 1) {
+    const next = current?.[parts[i]];
+    if (!next || typeof next !== "object" || Array.isArray(next)) {
+      return;
+    }
+    current = next as Record<string, unknown>;
+  }
+
+  const last = parts[parts.length - 1];
+  if (current && typeof current[last] === "string") {
+    current[last] = value;
+  }
+}
+
+export function getTranslationCatalog() {
+  const roFlat = flattenRecord(dictionaries.ro);
+  const enFlat = flattenRecord(dictionaries.en);
+  const keys = Array.from(new Set([...Object.keys(roFlat), ...Object.keys(enFlat)])).sort((a, b) => a.localeCompare(b));
+
+  return keys.map((key) => ({
+    key,
+    ro: roFlat[key] || "",
+    en: enFlat[key] || "",
+  }));
+}
+
+export async function getDictionary(locale?: Locale) {
+  const resolved = locale || (await getLocale());
+  const base = JSON.parse(JSON.stringify(dictionaries[resolved])) as Record<string, unknown>;
+
+  try {
+    const overrides = await prisma.localeTranslation.findMany({
+      where: { locale: resolved },
+      select: { key: true, value: true },
+    });
+
+    for (const item of overrides) {
+      assignIfPathExists(base, item.key, item.value);
+    }
+  } catch {
+    return base as (typeof dictionaries)[Locale];
+  }
+
+  return base as (typeof dictionaries)[Locale];
+}
+
+export async function getDefaultLocaleSetting(): Promise<Locale> {
+  return getConfiguredDefaultLocale();
+}
+
+
+
+

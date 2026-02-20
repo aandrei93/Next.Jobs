@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+/.idea
 
 # debug
 npm-debug.log*
@@ -39,3 +40,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+/playwright-report
+/test-results
+/.playwright
+
+# local runtime artifacts
+/public/uploads/
+/backups/
+/prisma/**/*.db
+/prisma/**/*.db-*
+*.sqlite
+*.sqlite-*
