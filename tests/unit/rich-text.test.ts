@@ -32,7 +32,6 @@ describe("stripRichText", () => {
   it("returns plain text from html", () => {
     expect(stripRichText("<p>Hello <strong>world</strong></p>")).toBe("Hello world");
   });
-
   it("does not double-unescape encoded entities", () => {
     expect(stripRichText("&amp;lt;script&amp;gt;")).toBe("&lt;script&gt;");
   });
