@@ -16,6 +16,19 @@ async function main() {
   const adminPassword = process.env.ADMIN_PASSWORD || "admin1234";
   const adminEmail = process.env.ADMIN_EMAIL || "admin@nextjobs.local";
 
+  await prisma.siteSettings.upsert({
+    where: { id: "default" },
+    update: {
+      adminTwoFactorRequired: false,
+      maintenanceMode: false,
+    },
+    create: {
+      id: "default",
+      adminTwoFactorRequired: false,
+      maintenanceMode: false,
+    },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
