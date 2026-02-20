@@ -482,6 +482,8 @@ const dictionaries = {
   },
 } as const;
 
+const BLOCKED_PATH_SEGMENTS = new Set(["__proto__", "prototype", "constructor"]);
+
 const getConfiguredDefaultLocale = async (): Promise<Locale> => {
   try {
     const settings = await prisma.siteSettings.findUnique({
@@ -515,10 +517,19 @@ function flattenRecord(record: unknown, prefix = "", out: Record<string, string>
 
 function assignIfPathExists(target: Record<string, unknown>, path: string, value: string) {
   const parts = path.split(".");
+  if (parts.length === 0 || parts.some((part) => BLOCKED_PATH_SEGMENTS.has(part))) {
+    return;
+  }
+
   let current: Record<string, unknown> | undefined = target;
 
   for (let i = 0; i < parts.length - 1; i += 1) {
-    const next = current?.[parts[i]];
+    const segment = parts[i];
+    if (!Object.prototype.hasOwnProperty.call(current, segment)) {
+      return;
+    }
+
+    const next = current?.[segment];
     if (!next || typeof next !== "object" || Array.isArray(next)) {
       return;
     }
@@ -526,7 +537,7 @@ function assignIfPathExists(target: Record<string, unknown>, path: string, value
   }
 
   const last = parts[parts.length - 1];
-  if (current && typeof current[last] === "string") {
+  if (current && Object.prototype.hasOwnProperty.call(current, last) && typeof current[last] === "string") {
     current[last] = value;
   }
 }
