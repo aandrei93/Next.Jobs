@@ -10,7 +10,7 @@ jobs:
   e2e-smoke:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: file:./ci.db
       NEXTAUTH_SECRET: ci-secret
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
       HOUSEKEEPING_SECRET: ci-housekeeping-secret
@@ -35,6 +35,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run prisma:generate
+
+      - name: Ensure clean SQLite state
+        run: rm -f prisma/ci.db prisma/dev.db prisma/prisma/dev.db
 
       - name: Apply Prisma migrations
         run: npx prisma migrate deploy
