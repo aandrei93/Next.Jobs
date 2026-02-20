@@ -278,6 +278,9 @@ export default async function WorkspaceCompaniesPage() {
                 <input type="hidden" name="id" value={company.id} />
                 <ConfirmSubmitButton
                   confirmMessage={isRo ? "Sigur vrei sa stergi compania?" : "Are you sure you want to delete this company?"}
+                  dialogTitle={isRo ? "Confirmare stergere companie" : "Confirm company deletion"}
+                  cancelLabel={isRo ? "Renunta" : "Cancel"}
+                  confirmLabel={isRo ? "Confirma" : "Confirm"}
                   className="rounded-md border border-rose-300 px-3 py-1.5 text-sm text-rose-700 hover:bg-rose-50"
                 >
                   {dict.admin.delete}

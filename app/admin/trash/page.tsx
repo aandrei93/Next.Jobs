@@ -41,8 +41,16 @@ export default async function AdminTrashPage() {
                   <ConfirmSubmitButton
                     confirmMessage={isRo ? "Restaurezi acest job?" : "Restore this job?"}
                     secureDelete
+                    dialogTitle={isRo ? "Confirmare restaurare job" : "Confirm job restore"}
                     deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                     passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                    cancelLabel={isRo ? "Renunta" : "Cancel"}
+                    confirmLabel={isRo ? "Confirma restaurarea" : "Confirm restore"}
+                    invalidSecureDeleteMessage={
+                      isRo
+                        ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                        : "Invalid confirmation. Type DELETE and provide your admin password."
+                    }
                     className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm text-emerald-800 hover:bg-emerald-50"
                   >
                     {isRo ? "Restaureaza" : "Restore"}
@@ -71,8 +79,16 @@ export default async function AdminTrashPage() {
                   <ConfirmSubmitButton
                     confirmMessage={isRo ? "Restaurezi aceasta companie?" : "Restore this company?"}
                     secureDelete
+                    dialogTitle={isRo ? "Confirmare restaurare companie" : "Confirm company restore"}
                     deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                     passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                    cancelLabel={isRo ? "Renunta" : "Cancel"}
+                    confirmLabel={isRo ? "Confirma restaurarea" : "Confirm restore"}
+                    invalidSecureDeleteMessage={
+                      isRo
+                        ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                        : "Invalid confirmation. Type DELETE and provide your admin password."
+                    }
                     className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm text-emerald-800 hover:bg-emerald-50"
                   >
                     {isRo ? "Restaureaza" : "Restore"}
@@ -100,8 +116,16 @@ export default async function AdminTrashPage() {
                   <ConfirmSubmitButton
                     confirmMessage={isRo ? "Restaurezi aceasta categorie?" : "Restore this category?"}
                     secureDelete
+                    dialogTitle={isRo ? "Confirmare restaurare categorie" : "Confirm category restore"}
                     deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                     passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                    cancelLabel={isRo ? "Renunta" : "Cancel"}
+                    confirmLabel={isRo ? "Confirma restaurarea" : "Confirm restore"}
+                    invalidSecureDeleteMessage={
+                      isRo
+                        ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                        : "Invalid confirmation. Type DELETE and provide your admin password."
+                    }
                     className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm text-emerald-800 hover:bg-emerald-50"
                   >
                     {isRo ? "Restaureaza" : "Restore"}

@@ -488,8 +488,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
           <Link href="/admin/companies" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
             <BriefcaseBusiness className="size-3.5" /> {isRo ? "Companii" : "Companies"}
           </Link>
-          <Link href="/api/admin/smoke/run" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
-            <Rocket className="size-3.5" /> {isRo ? "Run smoke" : "Run smoke"}
+          <Link href="/admin/settings?tab=operations" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
+            <Rocket className="size-3.5" /> {isRo ? "Smoke tests" : "Smoke tests"}
           </Link>
           <Link href="/admin/settings" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
             <ArchiveRestore className="size-3.5" /> {isRo ? "Backup & Settings" : "Backup & Settings"}

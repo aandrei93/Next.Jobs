@@ -128,8 +128,16 @@ export default async function AdminCategoriesPage() {
                 <ConfirmSubmitButton
                   confirmMessage={isRo ? "Sigur vrei sa stergi categoria?" : "Are you sure you want to delete this category?"}
                   secureDelete
+                  dialogTitle={isRo ? "Confirmare stergere categorie" : "Confirm category deletion"}
                   deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                   passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                  cancelLabel={isRo ? "Renunta" : "Cancel"}
+                  confirmLabel={isRo ? "Confirma stergerea" : "Confirm deletion"}
+                  invalidSecureDeleteMessage={
+                    isRo
+                      ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                      : "Invalid confirmation. Type DELETE and provide your admin password."
+                  }
                   className="rounded-md border border-rose-300 px-3 py-1.5 text-sm text-rose-700 hover:bg-rose-50"
                 >
                   {dict.admin.delete}
