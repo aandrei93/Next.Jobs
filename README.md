@@ -194,7 +194,7 @@ npm run start
 - `Coverage` workflow runs Vitest with coverage and uploads `coverage/` artifact
 - `CodeQL` workflow performs security/code scanning for JS/TS
 - `Release` workflow auto-creates GitHub releases for pushed `v*` tags
-- Dependabot is configured via `.github/dependabot.yml` (npm + GitHub Actions), with patch auto-merge workflow for Dependabot PRs
+- Dependabot is configured via `.github/dependabot.yml` (npm + GitHub Actions), limited to non-breaking updates (`patch`/`minor`), with patch auto-merge workflow for Dependabot PRs
 
 ## Automation (Housekeeping + Digest)
 
