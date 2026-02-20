@@ -32,6 +32,7 @@ export async function POST() {
       env: {
         ...process.env,
         E2E_BASE_URL: baseUrl,
+        E2E_SKIP_WEBSERVER: "1",
         CI: "1",
       },
     });

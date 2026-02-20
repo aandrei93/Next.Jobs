@@ -45,7 +45,7 @@ async function requireAdmin() {
 
 async function requireDestructiveConfirmation(formData: FormData, adminId: string, fallbackPath: string) {
   const confirmText = String(formData.get("confirmText") || "").trim().toUpperCase();
-  const adminPassword = String(formData.get("adminPassword") || "");
+  const adminPassword = String(formData.get("adminPassword") || "").trim();
 
   if (confirmText !== "DELETE" || adminPassword.length < 4) {
     redirectAdminError(fallbackPath);
