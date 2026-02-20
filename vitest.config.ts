@@ -11,5 +11,10 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts"],
     environment: "node",
     globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "coverage",
+    },
   },
 });

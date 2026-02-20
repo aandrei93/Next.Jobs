@@ -1,0 +1,35 @@
+name: Feature Request
+description: Suggest an enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What pain point are you trying to solve?
+      placeholder: As a user, I need...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe the desired behavior
+      placeholder: Add a new section that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      placeholder: Other options evaluated...
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected Impact
+      description: UX, business, performance, security impact
+      placeholder: Improves conversion by...

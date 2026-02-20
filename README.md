@@ -1,6 +1,11 @@
 # NextJobs
 [![CI](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml)
 [![E2E Smoke](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml)
+[![Coverage](https://github.com/aandrei93/Next.Jobs/actions/workflows/coverage.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/coverage.yml)
+[![CodeQL](https://github.com/aandrei93/Next.Jobs/actions/workflows/codeql.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/codeql.yml)
+[![Preview Deploy](https://github.com/aandrei93/Next.Jobs/actions/workflows/preview.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/preview.yml)
+[![Release](https://github.com/aandrei93/Next.Jobs/actions/workflows/release.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/release.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-brightgreen)](https://github.com/aandrei93/Next.Jobs/security/dependabot)
 
 Full-stack job platform built with `Next.js 16`, `Prisma`, `NextAuth`, `SQLite` (default), role-based workspace, and full admin panel.
 
@@ -171,15 +176,28 @@ npm run start
 - `npm run restore:run -- -DbBackupPath <path>` - restore SQLite backup (optionally uploads archive)
 - `npm run test:unit` - run unit tests with Vitest
 - `npm run test:unit:watch` - run unit tests in watch mode
+- `npm run test:coverage` - run unit tests with coverage output (`coverage/`)
 - `npm run test:e2e` - Playwright smoke E2E tests
 - `npm run release:bump -- [vX.Y.Z|auto] "Title RO" "Title EN" "Item RO 1|Item RO 2" "Item EN 1|Item EN 2"` - prepend frontend/admin release entries (auto patch bump supported)
 - `npm run release:quick -- "Title RO" "Title EN"` - fast changelog entry using automatic patch version bump
 
 ## CI and Testing
-- GitHub Actions workflows: `.github/workflows/ci.yml` and `.github/workflows/e2e-smoke.yml`
-- Both workflows run on push/PR for `master` and `main`
+- GitHub Actions workflows:
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/e2e-smoke.yml`
+  - `.github/workflows/coverage.yml`
+  - `.github/workflows/codeql.yml`
+  - `.github/workflows/preview.yml`
+  - `.github/workflows/release.yml`
+  - `.github/workflows/dependabot-automerge.yml`
+- Core validation workflows run on push/PR for `master` and `main`
 - Main pipeline steps: `npm ci` -> `prisma:generate` -> `prisma:validate` -> `migrate deploy` -> `prisma:migrate:status` -> `lint` -> `typecheck` -> `test:unit` -> `build`
 - `E2E Smoke` workflow runs Playwright smoke tests (including admin login flow)
+- `Coverage` workflow runs Vitest with coverage and uploads `coverage/` artifact
+- `CodeQL` workflow performs security/code scanning for JS/TS
+- `Preview Deploy` workflow deploys PR preview when `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` are configured in repo secrets
+- `Release` workflow auto-creates GitHub releases for pushed `v*` tags
+- Dependabot is configured via `.github/dependabot.yml` (npm + GitHub Actions), with patch auto-merge workflow for Dependabot PRs
 
 ## Automation (Housekeeping + Digest)
 

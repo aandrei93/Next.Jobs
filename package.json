@@ -25,7 +25,8 @@
     "restore:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restore.ps1",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest"
+    "test:unit:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
@@ -53,6 +54,7 @@
     "@types/nodemailer": "^7.0.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4",
