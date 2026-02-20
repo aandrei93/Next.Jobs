@@ -74,7 +74,7 @@ if (!parseVersion(nextVersion)) {
 const date = new Date().toISOString().slice(0, 10);
 
 function escapeValue(value) {
-  return value.replace(/"/g, '\\"');
+  return JSON.stringify(String(value)).slice(1, -1);
 }
 
 function stringifyItems(items) {
