@@ -1,4 +1,6 @@
-const ALLOWED_TAGS = new Set(["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "h2", "h3", "blockquote", "a"]);
+import sanitizeHtml from "sanitize-html";
+
+const ALLOWED_TAGS = ["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "h2", "h3", "blockquote", "a"];
 
 function sanitizeHref(raw: string) {
   const value = raw.trim();
@@ -13,42 +15,35 @@ function sanitizeHref(raw: string) {
 }
 
 export function sanitizeRichText(input: string) {
-  const withoutDangerousBlocks = input
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
-    .replace(/<(iframe|object|embed|form|input|button|textarea|select|option)[\s\S]*?>[\s\S]*?<\/\1>/gi, "")
-    .replace(/<(iframe|object|embed|form|input|button|textarea|select|option)[^>]*\/?>/gi, "");
-
-  return withoutDangerousBlocks
-    .replace(/<([^>]+)>/g, (_, content: string) => {
-      const trimmed = content.trim();
-      const closing = trimmed.startsWith("/");
-      const tagName = (closing ? trimmed.slice(1) : trimmed).split(/\s+/)[0].toLowerCase();
-
-      if (!ALLOWED_TAGS.has(tagName)) {
-        return "";
-      }
-
-      if (closing) {
-        return `</${tagName}>`;
-      }
-
-      if (tagName === "br") {
-        return "<br>";
-      }
-
-      if (tagName === "a") {
-        const hrefMatch = trimmed.match(/\shref\s*=\s*(['"])(.*?)\1/i);
-        const href = sanitizeHref(hrefMatch?.[2] || "");
+  return sanitizeHtml(input, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {
+      a: ["href", "target", "rel"],
+    },
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowedSchemesAppliedToAttributes: ["href"],
+    allowProtocolRelative: false,
+    disallowedTagsMode: "discard",
+    transformTags: {
+      a: (_tagName: string, attribs: Record<string, string>) => {
+        const href = sanitizeHref(attribs.href ?? "");
         if (!href) {
-          return "";
+          return { tagName: "span", attribs: {} as Record<string, string> };
         }
-        return `<a href="${href.replace(/"/g, "&quot;")}" target="_blank" rel="noopener noreferrer">`;
-      }
-
-      return `<${tagName}>`;
-    })
-    .trim();
+        return {
+          tagName: "a",
+          attribs: {
+            href,
+            target: "_blank",
+            rel: "noopener noreferrer",
+          },
+        };
+      },
+    },
+    // Remove empty anchors if URL gets rejected.
+    exclusiveFilter: (frame: { tag: string; attribs: Record<string, string> }) =>
+      frame.tag === "a" && !frame.attribs.href,
+  }).trim();
 }
 
 export function stripRichText(input: string) {
