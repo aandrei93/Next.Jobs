@@ -13,6 +13,16 @@ This repository is actively developed and already includes:
 - Housekeeping and digest automation scripts
 - Global scroll-reveal animations with hydration-safe behavior
 
+## Screenshots
+### Public Interface
+![Homepage](docs/screenshots/home.png)
+![Jobs page](docs/screenshots/jobs.png)
+
+### Admin Interface
+![Admin dashboard](docs/screenshots/admin-dashboard.png)
+![Admin jobs](docs/screenshots/admin-jobs.png)
+![Admin settings](docs/screenshots/admin-settings.png)
+
 ## Tech Stack
 - `next` `16.1.6`
 - `react` `19.2.3`
