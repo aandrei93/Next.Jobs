@@ -3,7 +3,6 @@
 [![E2E Smoke](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml)
 [![Coverage](https://github.com/aandrei93/Next.Jobs/actions/workflows/coverage.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/coverage.yml)
 [![CodeQL](https://github.com/aandrei93/Next.Jobs/actions/workflows/codeql.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/codeql.yml)
-[![Preview Deploy](https://github.com/aandrei93/Next.Jobs/actions/workflows/preview.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/preview.yml)
 [![Release](https://github.com/aandrei93/Next.Jobs/actions/workflows/release.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/release.yml)
 [![Dependabot](https://img.shields.io/badge/dependabot-enabled-brightgreen)](https://github.com/aandrei93/Next.Jobs/security/dependabot)
 
@@ -187,7 +186,6 @@ npm run start
   - `.github/workflows/e2e-smoke.yml`
   - `.github/workflows/coverage.yml`
   - `.github/workflows/codeql.yml`
-  - `.github/workflows/preview.yml`
   - `.github/workflows/release.yml`
   - `.github/workflows/dependabot-automerge.yml`
 - Core validation workflows run on push/PR for `master` and `main`
@@ -195,7 +193,6 @@ npm run start
 - `E2E Smoke` workflow runs Playwright smoke tests (including admin login flow)
 - `Coverage` workflow runs Vitest with coverage and uploads `coverage/` artifact
 - `CodeQL` workflow performs security/code scanning for JS/TS
-- `Preview Deploy` workflow deploys PR preview when `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` are configured in repo secrets
 - `Release` workflow auto-creates GitHub releases for pushed `v*` tags
 - Dependabot is configured via `.github/dependabot.yml` (npm + GitHub Actions), with patch auto-merge workflow for Dependabot PRs
 
