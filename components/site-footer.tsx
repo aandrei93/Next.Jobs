@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProtectedEmailLink } from "@/components/protected-email-link";
 import { getCurrentSession } from "@/lib/auth";
-import { FRONTEND_VERSION } from "@/lib/frontend-changelog";
+import { FRONTEND_VERSION, frontendChangelog } from "@/lib/frontend-changelog";
 import { prisma } from "@/lib/db";
 import { getDictionary, getLocale } from "@/lib/i18n";
 
@@ -25,6 +25,9 @@ export async function SiteFooter() {
   ]);
   const dict = await getDictionary(locale);
   const year = new Date().getFullYear();
+  const latestUpdateDate = frontendChangelog[0]?.date || "-";
+  const isMaintenance = Boolean(settings.maintenanceMode);
+  const reportIssueUrl = "https://github.com/aandrei93/Next.Jobs/issues/new";
 
   return (
     <footer data-site-footer className="mt-10 border-t border-slate-200 bg-slate-950 text-slate-200">
@@ -67,21 +70,29 @@ export async function SiteFooter() {
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-            {locale === "ro" ? "Cont" : "Account"}
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{locale === "ro" ? "Suport si legal" : "Support and legal"}</p>
           <div className="mt-3 flex flex-col gap-2 text-sm">
             {!session ? <Link href="/login" className="hover:text-white">{dict.nav.login}</Link> : null}
             {!session ? <Link href="/register" className="hover:text-white">{dict.nav.join}</Link> : null}
-            {session ? <Link href="/me" className="hover:text-white">{dict.nav.workspace}</Link> : null}
             <Link href="/privacy" className="hover:text-white">{locale === "ro" ? "Politica de confidentialitate" : "Privacy policy"}</Link>
-            <Link href="/changelog" className="hover:text-white">Release Note</Link>
+            <Link href="/terms" className="hover:text-white">{locale === "ro" ? "Termeni si conditii" : "Terms and conditions"}</Link>
+            <Link href="/cookies" className="hover:text-white">{locale === "ro" ? "Politica cookies" : "Cookies policy"}</Link>
+            <Link href="/changelog" className="hover:text-white">{locale === "ro" ? "Release notes" : "Release notes"}</Link>
+            <a href={reportIssueUrl} target="_blank" rel="noreferrer" className="hover:text-white">
+              {locale === "ro" ? "Raporteaza o problema" : "Report an issue"}
+            </a>
           </div>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 px-[var(--layout-gutter)] py-4 text-xs text-slate-400">
         <p>(c) {year} {settings.siteName || "nextjobs"}</p>
-        <p>Versiune: {FRONTEND_VERSION}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p>{locale === "ro" ? "Versiune" : "Version"}: {FRONTEND_VERSION}</p>
+          <p>{locale === "ro" ? "Ultimul update" : "Last update"}: {latestUpdateDate}</p>
+          <p className={isMaintenance ? "text-amber-300" : "text-emerald-300"}>
+            {locale === "ro" ? "Status" : "Status"}: {isMaintenance ? (locale === "ro" ? "Mentenanta" : "Maintenance") : (locale === "ro" ? "Operational" : "Operational")}
+          </p>
+        </div>
       </div>
     </footer>
   );
