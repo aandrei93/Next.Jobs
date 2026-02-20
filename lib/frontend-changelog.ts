@@ -135,33 +135,15 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
     ],
   },
   {
-    version: "v0.58.0",
-    date: "2026-02-19",
-    titleRo: "Badge aprobare companii in meniul Admin",
-    titleEn: "Company approval badge in Admin menu",
-    itemsRo: [
-      "Sidebar-ul Admin afiseaza acum un badge pe linkul Companii cu numarul de companii aflate in asteptare la aprobare.",
-      "Badge-ul este calculat dinamic din baza de date (verificationStatus = PENDING_VERIFICATION).",
-    ],
-    itemsEn: [
-      "Admin sidebar now shows a badge on Companies link with the number of companies pending approval.",
-      "Badge value is computed dynamically from database (verificationStatus = PENDING_VERIFICATION).",
-    ],
-  },
-  {
     version: "v0.57.0",
     date: "2026-02-19",
-    titleRo: "Fix active-state Admin + rol EMPLOYER",
-    titleEn: "Admin active-state fix + EMPLOYER role",
+    titleRo: "Rol EMPLOYER explicit in platforma",
+    titleEn: "Explicit EMPLOYER role in platform",
     itemsRo: [
-      "Rutele /admin/users si /admin/applications au din nou ancore explicite in meniu, cu highlight corect.",
-      "Meniul Admin ramane curat: vederea generala este separata de zonele dedicate Candidate/Employer.",
       "Sistemul de roluri include acum explicit EMPLOYER (alaturi de ADMIN si CANDIDATE).",
       "Conturile employer noi primesc automat rol EMPLOYER, iar conturile existente au fost sincronizate din accountType.",
     ],
     itemsEn: [
-      "/admin/users and /admin/applications now have explicit menu anchors with correct active highlighting.",
-      "Admin menu stays clean: general view is separated from dedicated Candidate/Employer zones.",
       "Role system now explicitly includes EMPLOYER (alongside ADMIN and CANDIDATE).",
       "New employer accounts now get EMPLOYER role automatically, and existing accounts were backfilled from accountType.",
     ],
@@ -169,16 +151,14 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
   {
     version: "v0.56.0",
     date: "2026-02-19",
-    titleRo: "Fix navigare activa in Workspace si cleanup meniu Admin",
-    titleEn: "Workspace active-nav fix and Admin menu cleanup",
+    titleRo: "Fix navigare activa in Workspace",
+    titleEn: "Workspace active-nav fix",
     itemsRo: [
       "Meniul din /me foloseste acum active-state exact pe ruta curenta, fara dublu-highlight la Sumar.",
-      "In Admin sidebar au fost eliminate dublurile de navigare pentru Aplicatii/Utilizatori din grupul general.",
       "Fluxurile pentru Aplicatii/Utilizatori raman disponibile doar in zonele dedicate Candidat/Angajator.",
     ],
     itemsEn: [
       "The /me menu now uses exact current-route active state, removing Overview double-highlighting.",
-      "Admin sidebar duplicate Applications/Users links were removed from the generic section.",
       "Applications/Users flows remain available only under dedicated Candidate/Employer zones.",
     ],
   },
@@ -424,12 +404,12 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
     titleRo: "Favicon din Media Library + emailuri automate pe template",
     titleEn: "Favicon from Media Library + template-driven automated emails",
     itemsRo: [
-      "Favicon-ul site-ului poate fi selectat din Media Library direct din Admin Settings.",
-      "Emailurile automate (bun venit, job nou, aplicari noi, mesaje noi) folosesc acum template-uri administrabile.",
+      "Favicon-ul site-ului poate fi selectat din Media Library prin setarile platformei.",
+      "Emailurile automate (bun venit, job nou, aplicari noi, mesaje noi) folosesc acum template-uri configurabile.",
     ],
     itemsEn: [
-      "Site favicon can now be selected from Media Library directly in Admin Settings.",
-      "Automated emails (welcome, new job, new applications, new messages) now use admin-manageable templates.",
+      "Site favicon can now be selected from Media Library via platform settings.",
+      "Automated emails (welcome, new job, new applications, new messages) now use configurable templates.",
     ],
   },
   {
@@ -439,11 +419,11 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
     titleEn: "Refined translation categories",
     itemsRo: [
       "Cheile localeName si localeSwitchLabel sunt acum grupate impreuna in categoria Limba & selector.",
-      "Ordinea categoriilor din Admin Translations este stabilizata pentru navigare mai rapida.",
+      "Ordinea categoriilor de traduceri este stabilizata pentru navigare mai rapida.",
     ],
     itemsEn: [
       "localeName and localeSwitchLabel keys are now grouped together under Locale & switch category.",
-      "Admin Translations category ordering is now stabilized for faster navigation.",
+      "Translation category ordering is now stabilized for faster navigation.",
     ],
   },
   {
@@ -491,15 +471,15 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
   {
     version: "v0.35.0",
     date: "2026-02-19",
-    titleRo: "Sistem de limba administrabil + limba implicita din setari",
-    titleEn: "Admin-managed language system + settings default locale",
+    titleRo: "Sistem de limba configurabil + limba implicita din setari",
+    titleEn: "Configurable language system + settings default locale",
     itemsRo: [
-      "Limba implicita pentru vizitatori noi este acum configurabila din Admin Settings.",
-      "Dictionarele publice aplica override-uri de traducere salvate din Admin, pe fiecare cheie.",
+      "Limba implicita pentru vizitatori noi este acum configurabila din setarile platformei.",
+      "Dictionarele publice aplica override-uri de traducere salvate in setari, pe fiecare cheie.",
     ],
     itemsEn: [
-      "Default language for new visitors is now configurable from Admin Settings.",
-      "Public dictionaries now apply translation overrides saved from Admin per key.",
+      "Default language for new visitors is now configurable from platform settings.",
+      "Public dictionaries now apply translation overrides saved in settings per key.",
     ],
   },
   {
@@ -509,11 +489,11 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
     titleEn: "Icon-based breadcrumbs on frontend",
     itemsRo: [
       "A fost adaugat breadcrumbs global in frontend pentru rutele publice si workspace.",
-      "Breadcrumbs nu apar pe home, auth, admin sau API, pentru o interfata mai curata.",
+      "Breadcrumbs nu apar pe home, auth sau API, pentru o interfata mai curata.",
     ],
     itemsEn: [
       "A global breadcrumbs component was added for public and workspace routes.",
-      "Breadcrumbs are hidden on home, auth, admin, and API routes for a cleaner interface.",
+      "Breadcrumbs are hidden on home, auth, and API routes for a cleaner interface.",
     ],
   },
   {
@@ -759,8 +739,8 @@ export const frontendChangelog: FrontendChangelogEntry[] = [
   {
     version: "v0.18.0",
     date: "2026-02-18",
-    titleRo: "Automations, deployment guide, and admin notes",
-    titleEn: "Automations, deployment guide, and admin notes",
+    titleRo: "Automations, deployment guide, and platform notes",
+    titleEn: "Automations, deployment guide, and platform notes",
     itemsRo: [
       "Flux nou de securitate cont: verificare email la inregistrare, recuperare parola si reset parola prin token.",
       "Sesiunile utilizatorului pot fi invalidate global (logout pe toate device-urile) din profil.",
