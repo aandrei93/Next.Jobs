@@ -1,4 +1,4 @@
-export const FRONTEND_VERSION = "v0.65.0";
+export const FRONTEND_VERSION = "v0.66.0";
 
 export type FrontendChangelogEntry = {
   version: string;
@@ -10,6 +10,24 @@ export type FrontendChangelogEntry = {
 };
 
 export const frontendChangelog: FrontendChangelogEntry[] = [
+  {
+    version: "v0.66.0",
+    date: "2026-02-20",
+    titleRo: "Homepage premium + detalii job/companie imbunatatite + refactor structura",
+    titleEn: "Premium homepage + improved job/company details + structural refactor",
+    itemsRo: [
+      "Homepage-ul a fost extins cu sectiuni premium (social proof, success stories, vizualuri reale) si CTA-uri mai orientate pe conversie.",
+      "In /jobs, afisarea rezultatului arata acum clar X din Y joburi, iar categoriile populare sunt clickabile si accesibile.",
+      "In pagina de anunt, sectiunea companiei a fost extinsa cu detalii utile (industrie, marime, fondare, verificare, registru), iar punctele cheie au format mai rigid si tradus RO/EN.",
+      "Refactor structural: i18n dictionaries separate, parser/utilitare job description centralizate, componente dedicate pentru homepage si blocurile mari de job details.",
+    ],
+    itemsEn: [
+      "Homepage was expanded with premium sections (social proof, success stories, real visuals) and more conversion-focused CTAs.",
+      "In /jobs, result summary now clearly shows X out of Y jobs, and popular categories are now clickable and accessible.",
+      "On job details pages, company section was expanded with practical metadata (industry, size, founded year, verification, registration), and key points now use a stricter RO/EN format.",
+      "Structural refactor: i18n dictionaries split out, shared job-description parsing/localization utilities, and dedicated components for homepage and large job-details blocks.",
+    ],
+  },
   {
     version: "v0.65.0",
     date: "2026-02-20",

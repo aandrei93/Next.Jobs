@@ -145,7 +145,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   const where: Prisma.JobWhereInput = { AND: andFilters };
 
-  const [allPublishedJobs, rawJobs, hasProfileResume] = await Promise.all([
+  const [allPublishedJobs, rawJobs, totalMatchingJobs, hasProfileResume] = await Promise.all([
     prisma.job.findMany({
       where: {
         status: "PUBLISHED",
@@ -159,6 +159,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       orderBy: getJobsOrderBy(parsedFilters.sort),
       take: Math.max(settings.jobsPerPage * 3, 90),
     }),
+    prisma.job.count({ where }),
     session?.user.id
       ? prisma.resume
           .findUnique({
@@ -308,7 +309,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
           <p className="text-sm text-slate-600">
-            {dict.jobs.showingRange} <span className="font-semibold text-slate-900">{formatCompactMetric(totalJobs, locale)}</span> {dict.jobs.jobs}
+            {dict.jobs.showingRange} <span className="font-semibold text-slate-900">{formatCompactMetric(totalJobs, locale)}</span>{" "}
+            {dict.jobs.of} <span className="font-semibold text-slate-900">{formatCompactMetric(totalMatchingJobs, locale)}</span> {dict.jobs.jobs}
           </p>
           <p className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-amber-700">{dict.jobs.liveFiltering}</p>
         </div>

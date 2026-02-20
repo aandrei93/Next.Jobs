@@ -7,6 +7,7 @@ import { Building2, ChevronLeft, ChevronRight, Clock3, ExternalLink, Eye, Mail, 
 import { EmploymentType } from "@prisma/client";
 import { getApplicationStatusBadgeClass, getApplicationStatusLabels, type ApplicationPipelineStatus } from "@/lib/application-status";
 import { formatCompactMetric } from "@/lib/format-metrics";
+import { localizeJobKeyPoints, parseJobDescription } from "@/lib/job-description";
 import { relativeDate } from "@/lib/jobs-query";
 import { toggleSavedJob } from "@/lib/public-actions";
 import { isRichHtml } from "@/lib/rich-text";
@@ -70,30 +71,6 @@ type JobsMasterDetailProps = {
 const INITIAL_ITEMS = 12;
 const INCREMENT = 10;
 
-function parseDescription(raw: string) {
-  const lines = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const bullets: string[] = [];
-  const paragraphs: string[] = [];
-
-  for (const line of lines) {
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      bullets.push(line.slice(2).trim());
-    } else {
-      paragraphs.push(line);
-    }
-  }
-
-  if (lines.length === 0 && raw.trim()) {
-    paragraphs.push(raw.trim());
-  }
-
-  return { paragraphs, bullets };
-}
-
 function formatDate(value: string | null, locale: "ro" | "en") {
   if (!value) {
     return "-";
@@ -127,7 +104,14 @@ export function JobsMasterDetail({
   const activeIndex = useMemo(() => jobs.findIndex((job) => job.slug === (activeJob?.slug || "")), [activeJob?.slug, jobs]);
   const savedSet = useMemo(() => new Set(savedJobIds), [savedJobIds]);
   const statusLabels = useMemo(() => getApplicationStatusLabels(locale), [locale]);
-  const parsedDescription = useMemo(() => (activeJob ? parseDescription(activeJob.description) : { paragraphs: [], bullets: [] }), [activeJob]);
+  const parsedDescription = useMemo(
+    () => (activeJob ? parseJobDescription(activeJob.description) : { paragraphs: [], bullets: [] }),
+    [activeJob]
+  );
+  const localizedBullets = useMemo(
+    () => localizeJobKeyPoints(parsedDescription.bullets, locale),
+    [parsedDescription.bullets, locale]
+  );
   const hasHtmlDescription = Boolean(activeJob?.description && isRichHtml(activeJob.description));
 
   const currentReturnTo = useMemo(() => {
@@ -341,11 +325,11 @@ export function JobsMasterDetail({
                         <p key={`${activeJob.id}-desc-${index}`}>{paragraph}</p>
                       ))}
                     </div>
-                    {parsedDescription.bullets.length > 0 && (
+                    {localizedBullets.length > 0 && (
                       <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <h4 className="font-[var(--font-sora)] text-base font-semibold text-slate-900">{texts.keyPointsTitle}</h4>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
-                          {parsedDescription.bullets.map((item) => (
+                          {localizedBullets.map((item) => (
                             <li key={item} className="flex gap-2">
                               <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-slate-500" />
                               <span>{item}</span>

@@ -1,4 +1,4 @@
-export const ADMIN_CHANGELOG_VERSION = "v0.51.0-admin";
+export const ADMIN_CHANGELOG_VERSION = "v0.52.0-admin";
 
 export type AdminChangelogEntry = {
   version: string;
@@ -10,6 +10,24 @@ export type AdminChangelogEntry = {
 };
 
 export const adminChangelog: AdminChangelogEntry[] = [
+  {
+    version: "v0.52.0-admin",
+    date: "2026-02-20",
+    titleRo: "Dashboard Admin curatat + KPI executive + grafice operationale",
+    titleEn: "Cleaned Admin dashboard + executive KPIs + operational charts",
+    itemsRo: [
+      "Dashboard-ul admin a fost simplificat prin eliminarea sectiunilor redundante, pastrand doar blocurile critice pentru decizie rapida.",
+      "Au fost adaugate KPI-uri executive cu trend (aplicari 24h, timp mediu pana la publish, publish rate, runtime errors).",
+      "Task Center prioritizat pentru actiuni imediate (review queue, expirari, erori, backup/companies).",
+      "Au fost introduse grafice noi: distributie status joburi (donut), top companii dupa aplicari (horizontal bars) si timeline publicari/aplicari.",
+    ],
+    itemsEn: [
+      "Admin dashboard was simplified by removing redundant sections and keeping only decision-critical blocks.",
+      "New executive KPIs with trends were added (24h applications, avg time to publish, publish rate, runtime errors).",
+      "A prioritized Task Center was introduced for immediate actions (review queue, expirations, errors, backup/companies).",
+      "New visual charts were added: job-status distribution (donut), top companies by applications (horizontal bars), and publish/application timeline.",
+    ],
+  },
   {
     version: "v0.51.0-admin",
     date: "2026-02-20",
