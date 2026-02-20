@@ -1,4 +1,5 @@
 # NextJobs
+[![CI](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml)
 
 Full-stack job platform built with `Next.js 16`, `Prisma`, `NextAuth`, `SQLite` (default), role-based workspace, and full admin panel.
 
@@ -164,9 +165,16 @@ npm run start
 - `npm run digest:setup-task` - register Windows scheduled task
 - `npm run backup:run` - local SQLite + uploads backup snapshot
 - `npm run restore:run -- -DbBackupPath <path>` - restore SQLite backup (optionally uploads archive)
+- `npm run test:unit` - run unit tests with Vitest
+- `npm run test:unit:watch` - run unit tests in watch mode
 - `npm run test:e2e` - Playwright smoke E2E tests
 - `npm run release:bump -- [vX.Y.Z|auto] "Title RO" "Title EN" "Item RO 1|Item RO 2" "Item EN 1|Item EN 2"` - prepend frontend/admin release entries (auto patch bump supported)
 - `npm run release:quick -- "Title RO" "Title EN"` - fast changelog entry using automatic patch version bump
+
+## CI and Testing
+- GitHub Actions workflow: `.github/workflows/ci.yml`
+- CI runs on push/PR for `master` and `main`
+- Pipeline steps: `npm ci` -> `prisma:generate` -> `lint` -> `test:unit` -> `build`
 
 ## Automation (Housekeeping + Digest)
 

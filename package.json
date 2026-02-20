@@ -20,7 +20,9 @@
     "release:quick": "node scripts/bump-frontend-version.mjs auto",
     "backup:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1",
     "restore:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restore.ps1",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
@@ -51,6 +53,7 @@
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

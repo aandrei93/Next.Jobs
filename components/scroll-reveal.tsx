@@ -59,7 +59,9 @@ export function ScrollReveal({
 
   return (
     <Tag
-      ref={ref}
+      ref={(node) => {
+        ref.current = node as HTMLElement | null;
+      }}
       className={`reveal-up ${className}`.trim()}
       style={{ "--reveal-delay": `${delayMs}ms` } as CSSProperties}
     >
