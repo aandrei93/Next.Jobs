@@ -10,7 +10,7 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: file:./prisma/dev.db
+      DATABASE_URL: file:./dev.db
       NEXTAUTH_SECRET: ci-secret
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       HOUSEKEEPING_SECRET: ci-housekeeping-secret
@@ -29,6 +29,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run prisma:generate
+
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
 
       - name: Lint
         run: npm run lint
