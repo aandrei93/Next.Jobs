@@ -320,8 +320,16 @@ export default async function AdminJobsPage({ searchParams }: AdminJobsPageProps
                         <ConfirmSubmitButton
                           confirmMessage={isRo ? "Sigur vrei sa stergi jobul?" : "Are you sure you want to delete this job?"}
                           secureDelete
+                          dialogTitle={isRo ? "Confirmare stergere job" : "Confirm job deletion"}
                           deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                           passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                          cancelLabel={isRo ? "Renunta" : "Cancel"}
+                          confirmLabel={isRo ? "Confirma stergerea" : "Confirm deletion"}
+                          invalidSecureDeleteMessage={
+                            isRo
+                              ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                              : "Invalid confirmation. Type DELETE and provide your admin password."
+                          }
                           ariaLabel={isRo ? "Sterge job" : "Delete job"}
                           className="group relative inline-flex items-center justify-center rounded-md border border-rose-300 px-2.5 py-1.5 text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                         >

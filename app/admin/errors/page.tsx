@@ -75,8 +75,16 @@ export default async function AdminErrorsPage({ searchParams }: AdminErrorsPageP
                     : "Are you sure you want to delete all error logs? This action cannot be undone."
                 }
                 secureDelete
+                dialogTitle={isRo ? "Confirmare stergere loguri" : "Confirm log deletion"}
                 deleteKeywordPrompt={isRo ? "Scrie DELETE pentru confirmare:" : "Type DELETE to confirm:"}
                 passwordPrompt={isRo ? "Confirma parola ta de admin:" : "Confirm your admin password:"}
+                cancelLabel={isRo ? "Renunta" : "Cancel"}
+                confirmLabel={isRo ? "Confirma stergerea" : "Confirm deletion"}
+                invalidSecureDeleteMessage={
+                  isRo
+                    ? "Confirmarea este invalida. Scrie DELETE si introdu parola de admin."
+                    : "Invalid confirmation. Type DELETE and provide your admin password."
+                }
               >
                 {isRo ? "Curata toate logurile" : "Clear all logs"}
               </ConfirmSubmitButton>

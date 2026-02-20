@@ -101,7 +101,15 @@ export default async function SavedJobsPage() {
                   <form action={toggleSavedJob}>
                     <input type="hidden" name="jobId" value={saved.job.id} />
                     <input type="hidden" name="returnTo" value="/saved-jobs" />
-                    <ConfirmSubmitButton confirmMessage={locale === "ro" ? "Sigur vrei sa elimini jobul din lista salvata?" : "Are you sure you want to remove this job from saved list?"} className="inline-flex rounded-full border border-rose-300 px-4 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50">{dict.jobs.remove}</ConfirmSubmitButton>
+                    <ConfirmSubmitButton
+                      confirmMessage={locale === "ro" ? "Sigur vrei sa elimini jobul din lista salvata?" : "Are you sure you want to remove this job from saved list?"}
+                      dialogTitle={locale === "ro" ? "Confirmare eliminare job salvat" : "Confirm saved job removal"}
+                      cancelLabel={locale === "ro" ? "Renunta" : "Cancel"}
+                      confirmLabel={locale === "ro" ? "Confirma" : "Confirm"}
+                      className="inline-flex rounded-full border border-rose-300 px-4 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                    >
+                      {dict.jobs.remove}
+                    </ConfirmSubmitButton>
                   </form>
                 </div>
               </div>
