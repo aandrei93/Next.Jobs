@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Briefcase, Building2, Clock3, Eye, Globe2, Hash, MapPin, Wallet } from "lucide-react";
+import { Briefcase, Clock3, Eye, Globe2, Hash, MapPin, Wallet } from "lucide-react";
+import { CompanyOverviewCard } from "@/components/job-details/company-overview-card";
 import { JobApplyForm } from "@/components/job-apply-form";
+import { KeyPointsPanel } from "@/components/job-details/key-points-panel";
 import { JobViewTracker } from "@/components/job-view-tracker";
 import { getApplicationStatusBadgeClass, getApplicationStatusLabels } from "@/lib/application-status";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatCompactMetric } from "@/lib/format-metrics";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { localizeJobKeyPoints, parseJobDescription } from "@/lib/job-description";
 import { relativeDate } from "@/lib/jobs-query";
 import { toggleSavedJob } from "@/lib/public-actions";
 import { isRichHtml, sanitizeRichText, stripRichText } from "@/lib/rich-text";
@@ -49,30 +52,6 @@ export async function generateMetadata({ params }: JobDetailsProps): Promise<Met
       images: [`/jobs/${slug}/twitter-image`],
     },
   };
-}
-
-function parseDescription(raw: string) {
-  const lines = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const bullets: string[] = [];
-  const paragraphs: string[] = [];
-
-  for (const line of lines) {
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      bullets.push(line.slice(2).trim());
-    } else {
-      paragraphs.push(line);
-    }
-  }
-
-  if (lines.length === 0 && raw.trim()) {
-    paragraphs.push(raw.trim());
-  }
-
-  return { paragraphs, bullets };
 }
 
 function firstValue(value?: string | string[]) {
@@ -129,7 +108,8 @@ export default async function JobDetailsPage({ params, searchParams }: JobDetail
   const sanitizedDescription = sanitizeRichText(job.description);
   const plainSummary = stripRichText(sanitizedSummary);
   const hasHtmlDescription = isRichHtml(sanitizedDescription);
-  const { paragraphs, bullets } = parseDescription(sanitizedDescription);
+  const { paragraphs, bullets } = parseJobDescription(sanitizedDescription);
+  const localizedBullets = localizeJobKeyPoints(bullets, locale);
 
   const isSaved = session
     ? Boolean(
@@ -278,46 +258,9 @@ export default async function JobDetailsPage({ params, searchParams }: JobDetail
               </div>
             )}
 
-            {!hasHtmlDescription && bullets.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <h3 className="font-[var(--font-sora)] text-lg font-semibold text-slate-900">{dict.jobs.keyPoints}</h3>
-                <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                  {bullets.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-slate-500" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {!hasHtmlDescription && <KeyPointsPanel locale={locale} title={dict.jobs.keyPoints} items={localizedBullets} />}
           </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 md:p-7">
-            <h2 className="font-[var(--font-sora)] text-2xl font-semibold text-slate-900">{isRo ? "Despre companie" : "About the company"}</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
-              {job.company.description ||
-                (isRo
-                  ? `${job.company.name} recruteaza pentru extinderea echipei in ${job.location}.`
-                  : `${job.company.name} is hiring to grow the team in ${job.location}.`)}
-            </p>
-            <div className="mt-4 space-y-2 text-sm text-slate-700">
-              <p className="inline-flex items-center gap-2">
-                <Building2 className="size-4 text-slate-500" /> {job.company.name}
-              </p>
-              <p className="inline-flex items-center gap-2">
-                <MapPin className="size-4 text-slate-500" /> {job.company.location}
-              </p>
-              {job.company.website && (
-                <p className="inline-flex items-center gap-2">
-                  <Globe2 className="size-4 text-slate-500" />
-                  <a href={job.company.website} target="_blank" rel="noreferrer" className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    {job.company.website}
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
+          <CompanyOverviewCard locale={locale} company={job.company} jobLocation={job.location} />
         </article>
 
         <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_25px_70px_-52px_rgba(15,23,42,0.7)] lg:sticky lg:top-24">

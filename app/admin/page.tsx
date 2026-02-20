@@ -2,10 +2,10 @@ import path from "node:path";
 import { access } from "node:fs/promises";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AlertTriangle, ArchiveRestore, BriefcaseBusiness, FileText, Rocket, ShieldAlert } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { formatCompactMetric } from "@/lib/format-metrics";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { getJobStatusBadgeClass, getJobStatusLabels } from "@/lib/jobs-query";
 
 type AdminPageProps = {
   searchParams: Promise<{
@@ -76,6 +76,31 @@ function TimelineBars({
   );
 }
 
+function HorizontalBars({
+  items,
+  formatMetric,
+}: {
+  items: Array<{ label: string; value: number }>;
+  formatMetric: (value: number) => string;
+}) {
+  const max = Math.max(1, ...items.map((item) => item.value));
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item.label}>
+          <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+            <span className="truncate pr-2">{item.label}</span>
+            <span className="font-semibold text-slate-900">{formatMetric(item.value)}</span>
+          </div>
+          <div className="h-2 rounded-full bg-slate-100">
+            <div className="h-2 rounded-full bg-cyan-500" style={{ width: `${Math.max(6, (item.value / max) * 100)}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function AdminDashboardPage({ searchParams }: AdminPageProps) {
   const [locale, rawSearchParams, settings] = await Promise.all([
     getLocale(),
@@ -89,7 +114,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
   ]);
   const dict = await getDictionary(locale);
   const isRo = locale === "ro";
-  const jobStatusLabels = getJobStatusLabels(locale);
   const formatMetric = (value: number) => formatCompactMetric(value, locale);
 
   const defaultRange =
@@ -119,11 +143,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
   const [
-    jobs,
-    companies,
-    categories,
-    applications,
-    users,
     statusCounts,
     publishedJobsInRange,
     applicationsInRange,
@@ -132,21 +151,15 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
     jobsExpiringSoon,
     staleDrafts,
     recentApplications,
-    recentJobs,
     viewsAggregate,
-    recentAuditLogs,
     errors24h,
     applyRejects24h,
     emailDeliveryFailures24h,
     applications24h,
     errorsPrev24h,
     applicationsPrev24h,
+    reviewedJobsInRange,
   ] = await Promise.all([
-    prisma.job.count(),
-    prisma.company.count(),
-    prisma.category.count(),
-    prisma.application.count(),
-    prisma.user.count(),
     prisma.job.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -157,6 +170,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
         publishedAt: { gte: fromDate },
       },
       select: {
+        createdAt: true,
         publishedAt: true,
       },
     }),
@@ -214,34 +228,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
         },
       },
     }),
-    prisma.job.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 6,
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        updatedAt: true,
-        viewsCount: true,
-        company: { select: { name: true } },
-        createdBy: { select: { name: true } },
-        _count: { select: { applications: true } },
-      },
-    }),
     prisma.job.aggregate({ _sum: { viewsCount: true } }),
-    prisma.adminAuditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: {
-        id: true,
-        action: true,
-        targetType: true,
-        targetId: true,
-        summary: true,
-        createdAt: true,
-        admin: { select: { name: true } },
-      },
-    }),
     prisma.errorLog.count({
       where: {
         createdAt: { gte: last24h },
@@ -272,6 +259,17 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
         createdAt: { gte: prev24h, lt: last24h },
       },
     }),
+    prisma.job.findMany({
+      where: {
+        status: "PUBLISHED",
+        publishedAt: { gte: fromDate },
+      },
+      select: {
+        createdAt: true,
+        publishedAt: true,
+      },
+      take: 300,
+    }),
   ]);
   const errorSpike = errors24h > Math.max(3, errorsPrev24h * 1.5);
   const applicationDrop = applicationsPrev24h > 0 && applications24h < applicationsPrev24h * 0.5;
@@ -282,18 +280,20 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
     PUBLISHED: statusCounts.find((item) => item.status === "PUBLISHED")?._count._all || 0,
   };
 
-  const cards = [
-    { label: dict.admin.jobs, value: jobs },
-    { label: dict.admin.companies, value: companies },
-    { label: dict.admin.categories, value: categories },
-    { label: dict.admin.applications, value: applications },
-    { label: dict.admin.users, value: users },
-  ];
   const publishedRangeCount = publishedJobsInRange.length;
-  const applicationsRangeCount = applicationsInRange.length;
-  const applicationsPerPublished = publishedRangeCount > 0 ? (applicationsRangeCount / publishedRangeCount).toFixed(2) : "0.00";
+  const publishRate = publishedRangeCount + jobsByStatus.PENDING_REVIEW > 0 ? ((publishedRangeCount / (publishedRangeCount + jobsByStatus.PENDING_REVIEW)) * 100).toFixed(1) : "0.0";
   const totalViews = viewsAggregate._sum.viewsCount || 0;
-  const compactTotalViews = formatCompactMetric(totalViews, locale);
+  const avgReviewHoursRaw =
+    reviewedJobsInRange.length > 0
+      ? reviewedJobsInRange.reduce((sum, item) => {
+          if (!item.publishedAt) return sum;
+          return sum + (item.publishedAt.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60);
+        }, 0) / reviewedJobsInRange.length
+      : 0;
+  const avgReviewHours = avgReviewHoursRaw > 0 ? avgReviewHoursRaw.toFixed(1) : "0.0";
+  const applicationsDeltaPct =
+    applicationsPrev24h > 0 ? ((applications24h - applicationsPrev24h) / applicationsPrev24h) * 100 : null;
+  const errorsDeltaPct = errorsPrev24h > 0 ? ((errors24h - errorsPrev24h) / errorsPrev24h) * 100 : null;
 
   const dayKeys: string[] = [];
   for (let i = rangeDays - 1; i >= 0; i -= 1) {
@@ -381,67 +381,80 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
     { key: "90d", label: dict.admin.range90 },
   ] as const;
 
-  const actionCards = [
-    {
-      href: "/admin/jobs",
-      title: isRo ? "Moderare joburi" : "Job moderation",
-      subtitle: isRo ? "Review, publicare si administrare joburi." : "Review, publish, and manage jobs.",
-      count: jobsByStatus.PENDING_REVIEW,
-      countLabel: isRo ? "in review" : "in review",
-    },
-    {
-      href: "/admin/applications",
-      title: isRo ? "Flux aplicari" : "Applications flow",
-      subtitle: isRo ? "Monitorizeaza aplicari noi si statusuri." : "Track new applications and statuses.",
-      count: applicationsRangeCount,
-      countLabel: isRo ? "in interval" : "in range",
-    },
-    {
-      href: "/admin/companies",
-      title: isRo ? "Companii" : "Companies",
-      subtitle: isRo ? "Suspenda/reactiveaza companii rapid." : "Suspend/reactivate companies quickly.",
-      count: suspendedCompanies,
-      countLabel: isRo ? "suspendate" : "suspended",
-    },
-    {
-      href: "/admin/settings",
-      title: isRo ? "Setari platforma" : "Platform settings",
-      subtitle: isRo ? "Control pentru functionalitati globale." : "Control global platform behavior.",
-      count: jobsExpiringSoon,
-      countLabel: isRo ? "expira < 7 zile" : "expiring < 7 days",
-    },
-  ];
+  const jobsStatusTotal = Math.max(1, jobsByStatus.DRAFT + jobsByStatus.PENDING_REVIEW + jobsByStatus.PUBLISHED);
+  const draftPct = (jobsByStatus.DRAFT / jobsStatusTotal) * 100;
+  const reviewPct = (jobsByStatus.PENDING_REVIEW / jobsStatusTotal) * 100;
+  const publishedPct = (jobsByStatus.PUBLISHED / jobsStatusTotal) * 100;
 
-  const alerts = [
+  const executiveKpis = [
     {
-      label: isRo ? "Joburi in review" : "Jobs in review",
+      label: isRo ? "Aplicari (24h)" : "Applications (24h)",
+      value: formatMetric(applications24h),
+      trend:
+        applicationsDeltaPct === null
+          ? isRo
+            ? "fara istoric"
+            : "no baseline"
+          : `${applicationsDeltaPct >= 0 ? "+" : ""}${applicationsDeltaPct.toFixed(0)}%`,
+      trendTone: applicationsDeltaPct !== null && applicationsDeltaPct < 0 ? "text-rose-700" : "text-emerald-700",
+      helper: isRo ? "vs 24h anterioare" : "vs previous 24h",
+    },
+    {
+      label: isRo ? "Timp mediu pana la publish" : "Avg time to publish",
+      value: `${avgReviewHours}h`,
+      trend: isRo ? "review flow" : "review flow",
+      trendTone: "text-slate-700",
+      helper: isRo ? "calculat pe joburi publicate" : "based on published jobs",
+    },
+    {
+      label: isRo ? "Rata publicare din review" : "Review publish rate",
+      value: `${publishRate}%`,
+      trend: isRo ? "pending -> published" : "pending -> published",
+      trendTone: Number(publishRate) >= 70 ? "text-emerald-700" : "text-amber-700",
+      helper: isRo ? "in intervalul selectat" : "in selected range",
+    },
+    {
+      label: isRo ? "Erori runtime (24h)" : "Runtime errors (24h)",
+      value: formatMetric(errors24h),
+      trend:
+        errorsDeltaPct === null ? (isRo ? "fara istoric" : "no baseline") : `${errorsDeltaPct >= 0 ? "+" : ""}${errorsDeltaPct.toFixed(0)}%`,
+      trendTone: errorsDeltaPct !== null && errorsDeltaPct > 0 ? "text-rose-700" : "text-emerald-700",
+      helper: isRo ? "vs 24h anterioare" : "vs previous 24h",
+    },
+  ] as const;
+
+  const taskCenter = [
+    {
+      title: isRo ? "Joburi in asteptare review" : "Jobs waiting review",
       value: jobsByStatus.PENDING_REVIEW,
-      tone: "amber",
+      href: "/admin/jobs",
+      priority: jobsByStatus.PENDING_REVIEW >= 10 ? "high" : jobsByStatus.PENDING_REVIEW > 0 ? "medium" : "low",
+      note: isRo ? "Necesita aprobare rapida." : "Needs fast approval.",
+      icon: FileText,
     },
     {
-      label: isRo ? "Joburi care expira in 7 zile" : "Jobs expiring in 7 days",
+      title: isRo ? "Joburi care expira in 7 zile" : "Jobs expiring in 7 days",
       value: jobsExpiringSoon,
-      tone: "rose",
+      href: "/admin/jobs",
+      priority: jobsExpiringSoon >= 10 ? "high" : jobsExpiringSoon > 0 ? "medium" : "low",
+      note: isRo ? "Recomandat refresh/repost." : "Recommend refresh/repost.",
+      icon: BriefcaseBusiness,
     },
     {
-      label: isRo ? "Draft-uri neactualizate" : "Stale drafts",
-      value: staleDrafts,
-      tone: "slate",
+      title: isRo ? "Alerte erori runtime" : "Runtime error alerts",
+      value: errors24h,
+      href: "/admin/errors",
+      priority: errorSpike || errors24h >= 10 ? "high" : errors24h > 0 ? "medium" : "low",
+      note: isRo ? "Verifica logurile critice." : "Check critical logs.",
+      icon: AlertTriangle,
     },
     {
-      label: isRo ? "Companii suspendate" : "Suspended companies",
+      title: isRo ? "Companii suspendate" : "Suspended companies",
       value: suspendedCompanies,
-      tone: "violet",
-    },
-    {
-      label: isRo ? "Spike erori 24h" : "24h error spike",
-      value: errorSpike ? 1 : 0,
-      tone: errorSpike ? "rose" : "slate",
-    },
-    {
-      label: isRo ? "Scadere aplicari 24h" : "24h application drop",
-      value: applicationDrop ? 1 : 0,
-      tone: applicationDrop ? "amber" : "slate",
+      href: "/admin/companies",
+      priority: suspendedCompanies > 0 ? "medium" : "low",
+      note: isRo ? "Verifica motivele de suspendare." : "Review suspension reasons.",
+      icon: BriefcaseBusiness,
     },
   ] as const;
 
@@ -467,161 +480,116 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
-          <article key={card.label} className="rounded-xl border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">{card.label}</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{formatMetric(card.value)}</p>
+      <section className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/jobs" className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700">
+            <FileText className="size-3.5" /> {isRo ? "Create/Moderate Jobs" : "Create/Moderate Jobs"}
+          </Link>
+          <Link href="/admin/companies" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
+            <BriefcaseBusiness className="size-3.5" /> {isRo ? "Companii" : "Companies"}
+          </Link>
+          <Link href="/api/admin/smoke/run" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
+            <Rocket className="size-3.5" /> {isRo ? "Run smoke" : "Run smoke"}
+          </Link>
+          <Link href="/admin/settings" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
+            <ArchiveRestore className="size-3.5" /> {isRo ? "Backup & Settings" : "Backup & Settings"}
+          </Link>
+          <Link href="/admin/errors" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-400">
+            <ShieldAlert className="size-3.5" /> {isRo ? "Error Center" : "Error Center"}
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {executiveKpis.map((item) => (
+          <article key={item.label} className="rounded-xl border border-slate-200 bg-white p-5">
+            <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
+            <p className={`mt-1 text-xs font-semibold ${item.trendTone}`}>{item.trend}</p>
+            <p className="text-xs text-slate-500">{item.helper}</p>
           </article>
         ))}
-      </div>
-
-      <section className="grid gap-4 xl:grid-cols-4">
-        {actionCards.map((card) => (
-          <Link key={card.href} href={card.href} className="rounded-xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">{card.title}</p>
-            <p className="mt-1 text-xs text-slate-600">{card.subtitle}</p>
-            <p className="mt-4 text-2xl font-bold text-slate-900">{formatMetric(card.count)}</p>
-            <p className="text-xs text-slate-500">{card.countLabel}</p>
-          </Link>
-        ))}
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Joburi publicate" : "Published jobs"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(publishedRangeCount)}</p>
-          <p className="text-xs text-slate-500">{isRo ? "in intervalul selectat" : "in selected range"}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{dict.admin.applications}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(applicationsRangeCount)}</p>
-          <p className="text-xs text-slate-500">{isRo ? "in intervalul selectat" : "in selected range"}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Aplicari per job publicat" : "Applications per published job"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{applicationsPerPublished}</p>
-          <p className="text-xs text-slate-500">{isRo ? "eficienta trafic -> conversie" : "traffic to conversion efficiency"}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Vizualizari totale" : "Total views"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{compactTotalViews}</p>
-          <p className="text-xs text-slate-500">{isRo ? "toate joburile active/inactive" : "across all jobs"}</p>
-        </article>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Erori runtime (24h)" : "Runtime errors (24h)"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(errors24h)}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Aplicari respinse (24h)" : "Rejected applications (24h)"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(applyRejects24h)}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Aplicari noi (24h)" : "New applications (24h)"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(applications24h)}</p>
-        </article>
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">{isRo ? "Email delivery failed (24h)" : "Email delivery failed (24h)"}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(emailDeliveryFailures24h)}</p>
-        </article>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold">{dict.admin.analyticsTitle}</h2>
-        <div className="mt-4 overflow-x-auto">
-          <div className="min-w-[760px] space-y-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{isRo ? "Task Center - Prioritati" : "Task Center - Priorities"}</h2>
+          <p className="text-xs text-slate-500">{isRo ? "Actiuni care necesita atentie acum" : "Actions that need attention now"}</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {taskCenter.map((task) => {
+            const Icon = task.icon;
+            const badgeClass =
+              task.priority === "high"
+                ? "bg-rose-50 text-rose-800 border-rose-200"
+                : task.priority === "medium"
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-emerald-50 text-emerald-800 border-emerald-200";
+
+            return (
+              <Link key={task.title} href={task.href} className="rounded-xl border border-slate-200 p-4 hover:border-slate-300 hover:bg-slate-50">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="inline-flex items-center gap-1 text-sm font-semibold text-slate-900">
+                    <Icon className="size-4" /> {task.title}
+                  </p>
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${badgeClass}`}>
+                    {task.priority}
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(task.value)}</p>
+                <p className="text-xs text-slate-500">{task.note}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <article className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-semibold">{isRo ? "Distributie status joburi" : "Job status distribution"}</h2>
+          <div className="mt-4 flex items-center gap-5">
+            <div
+              className="h-36 w-36 rounded-full border border-slate-200"
+              style={{
+                background: `conic-gradient(#94a3b8 0 ${draftPct}%, #f59e0b ${draftPct}% ${draftPct + reviewPct}%, #06b6d4 ${draftPct + reviewPct}% 100%)`,
+              }}
+            />
+            <div className="space-y-2 text-sm">
+              <p className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-slate-400" />{dict.admin.stageDraft}</span><b>{formatMetric(jobsByStatus.DRAFT)}</b></p>
+              <p className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-amber-500" />{dict.admin.stageReview}</span><b>{formatMetric(jobsByStatus.PENDING_REVIEW)}</b></p>
+              <p className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-cyan-500" />{dict.admin.stagePublished}</span><b>{formatMetric(jobsByStatus.PUBLISHED)}</b></p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">{isRo ? "Pondere publicate" : "Published share"}: {publishedPct.toFixed(1)}%</p>
+        </article>
+
+        <article className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-semibold">{dict.admin.topCompaniesByApplications}</h2>
+          <div className="mt-4">
+            <HorizontalBars
+              items={topCompanies.map((item) => ({ label: item.name, value: item.count }))}
+              formatMetric={formatMetric}
+            />
+            {topCompanies.length === 0 && <p className="text-sm text-slate-500">{dict.admin.noDataRange}</p>}
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-semibold">{dict.admin.analyticsTitle}</h2>
+          <div className="mt-4 space-y-4">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{dict.admin.publishedPerDay}</p>
               <TimelineBars timeline={timeline} maxTimelineValue={maxTimelineValue} metric="published" colorClass="bg-cyan-500" />
             </div>
-
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{dict.admin.applicationsPerDay}</p>
               <TimelineBars timeline={timeline} maxTimelineValue={maxTimelineValue} metric="applications" colorClass="bg-emerald-500" />
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">{dict.admin.funnelTitle}</h2>
-          <div className="mt-4 space-y-2 text-sm">
-            <p className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span>{dict.admin.stageDraft}</span>
-              <span className="font-semibold">{formatMetric(jobsByStatus.DRAFT)}</span>
-            </p>
-            <p className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span>{dict.admin.stageReview}</span>
-              <span className="font-semibold">{formatMetric(jobsByStatus.PENDING_REVIEW)}</span>
-            </p>
-            <p className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span>{dict.admin.stagePublished}</span>
-              <span className="font-semibold">{formatMetric(jobsByStatus.PUBLISHED)}</span>
-            </p>
-            <p className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span>{dict.admin.stageApplications}</span>
-              <span className="font-semibold">{formatMetric(applicationsInRange.length)}</span>
-            </p>
-          </div>
-        </article>
-
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">{dict.admin.topCompaniesByApplications}</h2>
-          <div className="mt-4 space-y-2 text-sm">
-            {topCompanies.map((company) => (
-              <p key={company.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                <span>{company.name}</span>
-                <span className="font-semibold">{formatMetric(company.count)}</span>
-              </p>
-            ))}
-            {topCompanies.length === 0 && <p className="text-slate-500">{dict.admin.noDataRange}</p>}
-          </div>
-        </article>
-
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">{dict.admin.topJobsByApplications}</h2>
-          <div className="mt-4 space-y-2 text-sm">
-            {topJobs.map((job) => (
-              <p key={job.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                <span className="truncate pr-2">
-                  {job.title} ({job.companyName})
-                </span>
-                <span className="font-semibold">{formatMetric(job.count)}</span>
-              </p>
-            ))}
-            {topJobs.length === 0 && <p className="text-slate-500">{dict.admin.noDataRange}</p>}
-          </div>
         </article>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">{isRo ? "Alerte operationale" : "Operational alerts"}</h2>
-          <div className="mt-4 space-y-2">
-            {alerts.map((alert) => (
-              <div
-                key={alert.label}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                  alert.tone === "amber"
-                    ? "bg-amber-50 text-amber-900"
-                    : alert.tone === "rose"
-                      ? "bg-rose-50 text-rose-900"
-                      : alert.tone === "violet"
-                        ? "bg-violet-50 text-violet-900"
-                        : "bg-slate-100 text-slate-800"
-                }`}
-              >
-                <span>{alert.label}</span>
-                <span className="font-semibold">{formatMetric(alert.value)}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-
         <article className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="text-lg font-semibold">{isRo ? "Aplicari recente" : "Recent applications"}</h2>
           <div className="mt-4 space-y-2">
@@ -637,6 +605,17 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
               </div>
             ))}
             {recentApplications.length === 0 && <p className="text-sm text-slate-500">{dict.admin.noApplications}</p>}
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-semibold">{dict.admin.topJobsByApplications}</h2>
+          <div className="mt-4">
+            <HorizontalBars
+              items={topJobs.map((item) => ({ label: `${item.title} (${item.companyName})`, value: item.count }))}
+              formatMetric={formatMetric}
+            />
+            {topJobs.length === 0 && <p className="text-sm text-slate-500">{dict.admin.noDataRange}</p>}
           </div>
         </article>
       </section>
@@ -659,62 +638,27 @@ export default async function AdminDashboardPage({ searchParams }: AdminPageProp
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold">{isRo ? "Joburi actualizate recent" : "Recently updated jobs"}</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-[900px] w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.08em] text-slate-500">
-                <th className="px-3 py-2">{isRo ? "Job" : "Job"}</th>
-                <th className="px-3 py-2">{dict.admin.companies}</th>
-                <th className="px-3 py-2">{isRo ? "Creat de" : "Created by"}</th>
-                <th className="px-3 py-2">{isRo ? "Status" : "Status"}</th>
-                <th className="px-3 py-2">{isRo ? "Vizualizari" : "Views"}</th>
-                <th className="px-3 py-2">{dict.admin.applications}</th>
-                <th className="px-3 py-2">{isRo ? "Actualizat" : "Updated"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentJobs.map((job) => (
-                <tr key={job.id} className="border-b border-slate-100">
-                  <td className="px-3 py-3 font-medium text-slate-900">
-                    <Link href={`/admin/jobs/${job.id}`} className="hover:text-slate-700">
-                      {job.title}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-3 text-slate-700">{job.company.name}</td>
-                  <td className="px-3 py-3 text-slate-700">{job.createdBy.name}</td>
-                  <td className="px-3 py-3">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getJobStatusBadgeClass(job.status)}`}>{jobStatusLabels[job.status]}</span>
-                  </td>
-                  <td className="px-3 py-3 font-medium text-slate-800">{formatCompactMetric(job.viewsCount, locale)}</td>
-                  <td className="px-3 py-3 font-medium text-slate-800">{formatMetric(job._count.applications)}</td>
-                  <td className="px-3 py-3 text-slate-600">{job.updatedAt.toLocaleDateString(isRo ? "ro-RO" : "en-GB")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {recentJobs.length === 0 && <p className="mt-3 text-sm text-slate-500">{dict.admin.noJobs}</p>}
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold">{isRo ? "Audit recent admin" : "Recent admin audit"}</h2>
-        <div className="mt-4 space-y-2">
-          {recentAuditLogs.map((log) => (
-            <div key={log.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-              <p className="font-medium text-slate-900">
-                {log.action} - {log.targetType}:{log.targetId}
-              </p>
-              <p className="text-xs text-slate-600">
-                {log.admin.name} - {log.createdAt.toLocaleString(isRo ? "ro-RO" : "en-GB")}
-              </p>
-              {log.summary && <p className="mt-1 text-xs text-slate-500">{log.summary}</p>}
-            </div>
-          ))}
-          {recentAuditLogs.length === 0 && <p className="text-sm text-slate-500">{dict.admin.noDataRange}</p>}
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <p className="text-xs text-slate-500">{isRo ? "Aplicari respinse (24h)" : "Rejected applications (24h)"}</p>
+            <p className="font-semibold text-slate-900">{formatMetric(applyRejects24h)}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <p className="text-xs text-slate-500">{isRo ? "Draft-uri neactualizate" : "Stale drafts"}</p>
+            <p className="font-semibold text-slate-900">{formatMetric(staleDrafts)}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <p className="text-xs text-slate-500">{isRo ? "Vizualizari totale" : "Total views"}</p>
+            <p className="font-semibold text-slate-900">{formatCompactMetric(totalViews, locale)}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <p className="text-xs text-slate-500">{isRo ? "Email delivery failed (24h)" : "Email delivery failed (24h)"}</p>
+            <p className="font-semibold text-slate-900">{formatMetric(emailDeliveryFailures24h)}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <p className="text-xs text-slate-500">{isRo ? "Scadere aplicari 24h" : "24h application drop"}</p>
+            <p className={`font-semibold ${applicationDrop ? "text-amber-700" : "text-emerald-700"}`}>{applicationDrop ? (isRo ? "Da" : "Yes") : (isRo ? "Nu" : "No")}</p>
+          </div>
         </div>
       </section>
     </div>
