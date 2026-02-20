@@ -1,5 +1,6 @@
 # NextJobs
 [![CI](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/ci.yml)
+[![E2E Smoke](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml/badge.svg)](https://github.com/aandrei93/Next.Jobs/actions/workflows/e2e-smoke.yml)
 
 Full-stack job platform built with `Next.js 16`, `Prisma`, `NextAuth`, `SQLite` (default), role-based workspace, and full admin panel.
 
@@ -175,10 +176,10 @@ npm run start
 - `npm run release:quick -- "Title RO" "Title EN"` - fast changelog entry using automatic patch version bump
 
 ## CI and Testing
-- GitHub Actions workflow: `.github/workflows/ci.yml`
-- CI runs on push/PR for `master` and `main`
+- GitHub Actions workflows: `.github/workflows/ci.yml` and `.github/workflows/e2e-smoke.yml`
+- Both workflows run on push/PR for `master` and `main`
 - Main pipeline steps: `npm ci` -> `prisma:generate` -> `prisma:validate` -> `migrate deploy` -> `prisma:migrate:status` -> `lint` -> `typecheck` -> `test:unit` -> `build`
-- Separate `e2e-smoke` job runs Playwright smoke tests (including admin login flow) after main pipeline passes
+- `E2E Smoke` workflow runs Playwright smoke tests (including admin login flow)
 
 ## Automation (Housekeeping + Digest)
 
