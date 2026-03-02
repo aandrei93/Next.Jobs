@@ -57,7 +57,7 @@
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.0",
     "@vitest/coverage-v8": "^4.0.18",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5",
